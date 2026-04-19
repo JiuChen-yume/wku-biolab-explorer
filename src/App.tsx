@@ -1,0 +1,784 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Beaker, 
+  Microscope, 
+  ShieldCheck, 
+  MessageSquare, 
+  Search, 
+  ChevronRight, 
+  X, 
+  Send, 
+  Info,
+  AlertTriangle,
+  BookOpen,
+  Menu,
+  Trash2,
+  Waves,
+  CheckCircle2,
+  HelpCircle,
+  ArrowRight,
+  Home as HomeIcon,
+  GraduationCap
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { equipmentData } from './data/equipment';
+import { tutorialData, safetyRules, quizQuestions } from './data/content';
+import { Equipment, Message, Tutorial, SafetyRule, QuizQuestion } from './types';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+type Tab = 'home' | 'equipment' | 'tutorials' | 'safety' | 'quiz';
+
+export default function App() {
+  const [language, setLanguage] = useState<'en' | 'zh'>('en');
+
+  const t = <T,>(en: T, zh: T): T => language === 'en' ? en : zh;
+
+  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'model', content: 'Hello! I am your WKU BioLab Assistant. How can I help you with the laboratory equipment today?' }
+  ]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Quiz State
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [showQuizResult, setShowQuizResult] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+
+  const categories = ['All', 'Microscopy', 'Centrifugation', 'Molecular', 'General', 'Glassware', 'Safety'];
+
+  const filteredEquipment = equipmentData.filter(item => {
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = item.name.toLowerCase().includes(query) || 
+                         item.nameZh.includes(query) ||
+                         item.description.toLowerCase().includes(query) ||
+                         item.descriptionZh.includes(query) ||
+                         item.model?.toLowerCase().includes(query) ||
+                         item.assetId?.toLowerCase().includes(query);
+    return matchesCategory && matchesSearch;
+  });
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMsg: Message = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsTyping(true);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [...messages, userMsg].map(m => ({
+          role: m.role,
+          parts: [{ text: m.content }]
+        })),
+        config: {
+          systemInstruction: `You are a helpful and professional Laboratory Management Assistant at Wenzhou-Kean University (WKU). Your goal is to help students and faculty manage and use biology laboratory equipment safely and effectively. You have access to technical specifications (Model, Manufacturer, Asset ID) and status information. Be concise, professional, and prioritize safety. Respond in the language the user is using (English or Chinese). Current interface language: ${language === 'en' ? 'English' : 'Chinese'}.`,
+        }
+      });
+
+      const modelMsg: Message = { role: 'model', content: response.text || "I'm sorry, I couldn't process that. Please try again." };
+      setMessages(prev => [...prev, modelMsg]);
+    } catch (error) {
+      console.error("AI Error:", error);
+      setMessages(prev => [...prev, { role: 'model', content: "Error connecting to the AI assistant. Please check your connection." }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleQuizAnswer = (optionIndex: number) => {
+    if (selectedAnswer !== null) return;
+    
+    setSelectedAnswer(optionIndex);
+    const correct = optionIndex === quizQuestions[currentQuestionIndex].correctAnswer;
+    setIsAnswerCorrect(correct);
+    if (correct) setQuizScore(prev => prev + 1);
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestionIndex < quizQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer(null);
+      setIsAnswerCorrect(null);
+    } else {
+      setShowQuizResult(true);
+    }
+  };
+
+  const resetQuiz = () => {
+    setCurrentQuestionIndex(0);
+    setQuizScore(0);
+    setShowQuizResult(false);
+    setSelectedAnswer(null);
+    setIsAnswerCorrect(null);
+  };
+
+  const renderHome = () => (
+    <div className="space-y-12">
+      <section className="bg-[#003366] rounded-3xl p-8 md:p-16 text-white relative overflow-hidden shadow-2xl border-b-8 border-[#C5B358]">
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase mb-6 border border-white/20">
+            <span className="w-2 h-2 bg-[#C5B358] rounded-full animate-pulse"></span>
+            {t('Wenzhou-Kean University', '温州肯恩大学')}
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            {t('BioLab Equipment', '生物实验室器材')}<br/>{t('Management System', '管理系统')}
+          </h1>
+          <p className="text-blue-100 text-lg mb-10 opacity-90 leading-relaxed max-w-2xl">
+            {t('A centralized portal for WKU students and faculty to explore laboratory resources, access technical specifications, and master experimental protocols.', '为温肯师生提供的中心化门户，用于探索实验室资源、获取技术规格并掌握实验方案。')}
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <button 
+              onClick={() => setActiveTab('equipment')}
+              className="bg-[#C5B358] text-[#003366] px-8 py-4 rounded-2xl font-bold hover:bg-[#b3a24f] transition-all flex items-center gap-2 shadow-lg"
+            >
+              <BookOpen size={20} />
+              {t('Equipment Catalog', '器材目录')}
+            </button>
+            <button 
+              onClick={() => setActiveTab('safety')}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+            >
+              <ShieldCheck size={20} />
+              {t('Safety Protocols', '安全规范')}
+            </button>
+          </div>
+        </div>
+        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-10%] left-[-5%] w-64 h-64 bg-[#C5B358]/10 rounded-full blur-3xl"></div>
+        <Microscope className="absolute right-12 bottom-12 text-white/5 w-80 h-80 hidden lg:block" />
+      </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {categories.filter(c => c !== 'All').map((cat, i) => (
+          <button
+            key={cat}
+            onClick={() => {
+              setSelectedCategory(cat);
+              setActiveTab('equipment');
+            }}
+            className="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#003366]/20 transition-all text-left"
+          >
+            <div className="bg-slate-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#003366] group-hover:text-white transition-all">
+              {cat === 'Microscopy' && <Microscope size={28} />}
+              {cat === 'Centrifugation' && <Waves size={28} />}
+              {cat === 'Molecular' && <Beaker size={28} />}
+              {cat === 'General' && <Info size={28} />}
+              {cat === 'Glassware' && <Beaker size={28} />}
+              {cat === 'Safety' && <ShieldCheck size={28} />}
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-[#003366]">
+              {t(cat, cat === 'Microscopy' ? '显微镜' : cat === 'Centrifugation' ? '离心' : cat === 'Molecular' ? '分子' : cat === 'General' ? '通用' : cat === 'Glassware' ? '玻璃器皿' : '安全')}
+            </h3>
+            <p className="text-slate-500 text-sm">
+              {t(`Explore specialized ${cat.toLowerCase()} instruments and tools.`, `探索专业的${t(cat, cat === 'Microscopy' ? '显微镜' : cat === 'Centrifugation' ? '离心' : cat === 'Molecular' ? '分子' : cat === 'General' ? '通用' : cat === 'Glassware' ? '玻璃器皿' : '安全')}仪器和工具。`)}
+            </p>
+          </button>
+        ))}
+      </div>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-200">
+        {[
+          { icon: <GraduationCap className="text-[#003366]" />, title: t('Technical Specs', '技术规格'), desc: t('Access detailed model information, manufacturer details, and real-time status.', '获取详细的型号信息、制造商详情和实时状态。') },
+          { icon: <ShieldCheck className="text-[#003366]" />, title: t('Standardized Safety', '标准化安全'), desc: t('Compliant with WKU and international laboratory safety standards.', '符合温肯及国际实验室安全标准。') },
+          { icon: <MessageSquare className="text-[#003366]" />, title: t('AI Support', 'AI 支持'), desc: t('Intelligent assistance for equipment troubleshooting and protocol guidance.', '针对器材故障排除和实验方案指导的智能辅助。') },
+        ].map((feature, i) => (
+          <div key={i} className="flex gap-6">
+            <div className="bg-blue-50 w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center">
+              {feature.icon}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{feature.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{feature.desc}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+
+  const renderEquipment = () => (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                selectedCategory === cat 
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" 
+                  : "bg-white text-slate-600 border border-slate-200 hover:border-emerald-300"
+              )}
+            >
+              {t(cat, cat === 'All' ? '全部' : cat === 'Microscopy' ? '显微镜' : cat === 'Centrifugation' ? '离心' : cat === 'Molecular' ? '分子' : cat === 'General' ? '通用' : cat === 'Glassware' ? '玻璃器皿' : '安全')}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <input 
+            type="text" 
+            placeholder={t("Search equipment name or usage...", "搜索器材名称或用途...")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <AnimatePresence mode="popLayout">
+          {filteredEquipment.map((item) => (
+            <motion.div
+              layout
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              whileHover={{ y: -4 }}
+              className="bg-white rounded-2xl border border-slate-200 overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all"
+              onClick={() => setSelectedEquipment(item)}
+            >
+              <div className="aspect-[4/3] overflow-hidden relative">
+                <img 
+                  src={item.image} 
+                  alt={t(item.name, item.nameZh)}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-3 left-3">
+                  <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-emerald-700 border border-emerald-100">
+                    {t(item.category, item.category === 'Microscopy' ? '显微镜' : item.category === 'Centrifugation' ? '离心' : item.category === 'Molecular' ? '分子' : item.category === 'General' ? '通用' : item.category === 'Glassware' ? '玻璃器皿' : '安全')}
+                  </span>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                    item.status === 'Available' ? "bg-emerald-100 text-emerald-700" :
+                    item.status === 'In Use' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
+                  )}>
+                    {t(item.status, item.status === 'Available' ? '可用' : item.status === 'In Use' ? '使用中' : '维护中')}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">{item.assetId}</span>
+                </div>
+                <h3 className="font-bold text-slate-900 mb-1 group-hover:text-[#003366] transition-colors">{t(item.name, item.nameZh)}</h3>
+                <p className="text-slate-500 text-xs mb-4 line-clamp-1">{item.model}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                  <span className="text-xs font-bold text-[#003366] flex items-center gap-1">
+                    {t('View Specs', '查看规格')} <ChevronRight size={14} />
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+
+  const renderTutorials = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {tutorialData.map((tutorial) => (
+        <div key={tutorial.id} className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-emerald-100 p-3 rounded-2xl">
+              <GraduationCap className="text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-slate-900">{t(tutorial.title, tutorial.titleZh)}</h3>
+            </div>
+          </div>
+          <div className="space-y-6">
+            {tutorial.steps.map((step, i) => (
+              <div key={i} className="flex gap-4 group">
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                    {i + 1}
+                  </div>
+                  {i < tutorial.steps.length - 1 && <div className="w-0.5 h-full bg-slate-100 my-1"></div>}
+                </div>
+                <div className="pb-4">
+                  <h4 className="font-bold text-slate-900 mb-1">{t(step.title, step.titleZh)}</h4>
+                  <p className="text-slate-500 text-sm leading-relaxed">{t(step.description, step.descriptionZh)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderSafety = () => (
+    <div className="space-y-12">
+      <div className="text-center max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold text-slate-900 mb-4">{t('Laboratory Safety Protocols', '实验室安全规范')}</h2>
+        <p className="text-slate-500">{t('Before entering the WKU Biology Laboratory, please familiarize yourself with and strictly follow these safety guidelines.', '在进入温州肯恩大学生物实验室之前，请熟悉并严格遵守这些安全指南。')}</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {safetyRules.map((rule) => {
+          const IconComponent = {
+            ShieldCheck: ShieldCheck,
+            AlertTriangle: AlertTriangle,
+            Trash2: Trash2,
+            Waves: Waves
+          }[rule.icon] || Info;
+
+          return (
+            <div key={rule.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+              <div className="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <IconComponent className="text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{t(rule.title, rule.titleZh)}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{t(rule.content, rule.contentZh)}</p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="bg-amber-50 rounded-3xl p-8 border border-amber-100 flex flex-col md:flex-row gap-8 items-center">
+        <div className="bg-amber-100 p-4 rounded-2xl">
+          <AlertTriangle className="text-amber-600 w-8 h-8" />
+        </div>
+        <div>
+          <h4 className="text-xl font-bold text-amber-900 mb-2">{t('Emergency Procedures', '紧急程序')}</h4>
+          <p className="text-amber-800 text-sm leading-relaxed">
+            {t('In case of chemical spills, fire, or injury, notify the lab instructor or technician immediately. Familiarize yourself with the location of eye wash stations, emergency showers, and fire extinguishers.', '如果发生化学品泄漏、火灾或受伤，请立即通知实验室讲师或技术人员。熟悉洗眼站、紧急淋浴器和灭火器的位置。')}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderQuiz = () => {
+    if (showQuizResult) {
+      return (
+        <div className="max-w-xl mx-auto bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-100">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t('Quiz Completed!', '测试完成！')}</h2>
+          <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${quizQuestions.length}`, `你的得分是 ${quizScore} / ${quizQuestions.length}`)}</p>
+          <button 
+            onClick={resetQuiz}
+            className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all"
+          >
+            {t('Restart Quiz', '重新开始')}
+          </button>
+        </div>
+      );
+    }
+
+    const question = quizQuestions[currentQuestionIndex];
+
+    return (
+      <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
+        <div className="flex justify-between items-center mb-8">
+          <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
+            {t(`Question ${currentQuestionIndex + 1} of ${quizQuestions.length}`, `第 ${currentQuestionIndex + 1} 题，共 ${quizQuestions.length} 题`)}
+          </span>
+          <div className="flex gap-1">
+            {quizQuestions.map((_, i) => (
+              <div key={i} className={cn("w-8 h-1 rounded-full", i <= currentQuestionIndex ? "bg-emerald-600" : "bg-slate-100")} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl font-bold text-slate-900 mb-8">{t(question.question, question.questionZh)}</h3>
+        <div className="space-y-4 mb-8">
+          {t(question.options, question.optionsZh).map((option, i) => (
+            <button
+              key={i}
+              onClick={() => handleQuizAnswer(i)}
+              disabled={selectedAnswer !== null}
+              className={cn(
+                "w-full p-4 rounded-2xl text-left border-2 transition-all flex items-center justify-between",
+                selectedAnswer === null ? "border-slate-100 hover:border-emerald-200 hover:bg-emerald-50" : 
+                i === question.correctAnswer ? "border-emerald-500 bg-emerald-50 text-emerald-900" :
+                selectedAnswer === i ? "border-rose-500 bg-rose-50 text-rose-900" : "border-slate-100 opacity-50"
+              )}
+            >
+              <span className="font-medium">{option}</span>
+              {selectedAnswer !== null && i === question.correctAnswer && <CheckCircle2 size={20} className="text-emerald-500" />}
+              {selectedAnswer === i && i !== question.correctAnswer && <X size={20} className="text-rose-500" />}
+            </button>
+          ))}
+        </div>
+        
+        <AnimatePresence>
+          {selectedAnswer !== null && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className={cn("p-4 rounded-2xl text-sm", isAnswerCorrect ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+                <p className="font-bold mb-1">{isAnswerCorrect ? t('Correct!', '正确！') : t('Incorrect', '错误')}</p>
+                <p>{t(question.explanation, question.explanationZh)}</p>
+              </div>
+              <button 
+                onClick={nextQuestion}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+              >
+                {currentQuestionIndex === quizQuestions.length - 1 ? t('View Results', '查看结果') : t('Next Question', '下一题')}
+                <ArrowRight size={20} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+              <div className="bg-[#003366] p-2 rounded-lg shadow-lg">
+                <Beaker className="text-white w-6 h-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg leading-tight tracking-tight text-[#003366]">WKU BioLab</span>
+                <span className="text-[10px] font-bold text-[#C5B358] uppercase tracking-[0.2em]">
+                  {t('Management System', '管理系统')}
+                </span>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-6">
+              {[
+                { id: 'home', label: t('Home', '首页'), icon: <HomeIcon size={16} /> },
+                { id: 'equipment', label: t('Catalog', '器材库'), icon: <Microscope size={16} /> },
+                { id: 'tutorials', label: t('Tutorials', '教学'), icon: <GraduationCap size={16} /> },
+                { id: 'safety', label: t('Safety', '安全'), icon: <ShieldCheck size={16} /> },
+                { id: 'quiz', label: t('Quiz', '测试'), icon: <HelpCircle size={16} /> },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as Tab)}
+                  className={cn(
+                    "text-sm font-bold flex items-center gap-2 px-3 py-2 rounded-xl transition-all",
+                    activeTab === tab.id ? "text-[#003366] bg-blue-50" : "text-slate-500 hover:text-[#003366] hover:bg-slate-50"
+                  )}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+              <div className="flex items-center gap-3 border-l border-slate-200 pl-6 ml-2">
+                <button
+                  onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all text-slate-600 flex items-center gap-2"
+                >
+                  <Waves size={14} className="text-[#C5B358]" />
+                  {language === 'en' ? '中文' : 'English'}
+                </button>
+                <button 
+                  onClick={() => setIsChatOpen(true)}
+                  className="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#004d99] transition-all shadow-lg shadow-blue-200"
+                >
+                  <MessageSquare size={16} />
+                  {t('AI Assistant', 'AI 助手')}
+                </button>
+              </div>
+            </div>
+            <div className="md:hidden">
+              <Menu className="text-slate-600" />
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'home' && renderHome()}
+            {activeTab === 'equipment' && renderEquipment()}
+            {activeTab === 'tutorials' && renderTutorials()}
+            {activeTab === 'safety' && renderSafety()}
+            {activeTab === 'quiz' && renderQuiz()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* Equipment Detail Modal */}
+      <AnimatePresence>
+        {selectedEquipment && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedEquipment(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+            >
+              <button 
+                onClick={() => setSelectedEquipment(null)}
+                className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="w-full md:w-1/2 bg-slate-100">
+                <img 
+                  src={selectedEquipment.image} 
+                  alt={selectedEquipment.name}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              <div className="w-full md:w-1/2 p-8 overflow-y-auto custom-scrollbar">
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[#003366] text-xs font-bold uppercase tracking-widest">
+                      {t(selectedEquipment.category, selectedEquipment.category === 'Microscopy' ? '显微镜' : selectedEquipment.category === 'Centrifugation' ? '离心' : selectedEquipment.category === 'Molecular' ? '分子' : selectedEquipment.category === 'General' ? '通用' : selectedEquipment.category === 'Glassware' ? '玻璃器皿' : '安全')}
+                    </span>
+                    <span className={cn(
+                      "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider",
+                      selectedEquipment.status === 'Available' ? "bg-emerald-100 text-emerald-700" :
+                      selectedEquipment.status === 'In Use' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
+                    )}>
+                      {t(selectedEquipment.status, selectedEquipment.status === 'Available' ? '可用' : selectedEquipment.status === 'In Use' ? '使用中' : '维护中')}
+                    </span>
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-900 mb-2">{t(selectedEquipment.name, selectedEquipment.nameZh)}</h2>
+                  <p className="text-slate-600 leading-relaxed">{t(selectedEquipment.description, selectedEquipment.descriptionZh)}</p>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Technical Specs Table - ZJU Style */}
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <Info size={18} className="text-[#003366]" />
+                      {t('Technical Specifications', '技术规格')}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-y-3 text-sm">
+                      <div className="text-slate-500">{t('Model', '型号')}</div>
+                      <div className="font-medium text-slate-900">{selectedEquipment.model || 'N/A'}</div>
+                      <div className="text-slate-500">{t('Manufacturer', '制造商')}</div>
+                      <div className="font-medium text-slate-900">{selectedEquipment.manufacturer || 'N/A'}</div>
+                      <div className="text-slate-500">{t('Location', '位置')}</div>
+                      <div className="font-medium text-slate-900">{t(selectedEquipment.location, selectedEquipment.locationZh) || 'N/A'}</div>
+                      <div className="text-slate-500">{t('Asset ID', '资产编号')}</div>
+                      <div className="font-mono text-slate-900">{selectedEquipment.assetId || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <GraduationCap size={18} className="text-[#003366]" />
+                      {t('Operation Guide', '操作指南')}
+                    </h4>
+                    <ul className="space-y-4">
+                      {t(selectedEquipment.steps, selectedEquipment.stepsZh).map((step, i) => (
+                        <li key={i} className="flex gap-4 text-sm text-slate-600">
+                          <span className="flex-shrink-0 w-6 h-6 bg-blue-50 text-[#003366] rounded-lg flex items-center justify-center text-xs font-bold border border-blue-100">
+                            {i + 1}
+                          </span>
+                          <span className="pt-0.5">{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+                    <h4 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
+                      <AlertTriangle size={18} className="text-amber-500" />
+                      {t('Safety Precautions', '安全注意事项')}
+                    </h4>
+                    <ul className="space-y-2">
+                      {t(selectedEquipment.safetyTips, selectedEquipment.safetyTipsZh).map((tip, i) => (
+                        <li key={i} className="text-sm text-amber-800 flex gap-3">
+                          <span className="text-amber-400 font-bold">•</span>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Chat Drawer */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsChatOpen(false)}
+              className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px]"
+            />
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full"
+            >
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-[#003366] text-white shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <Beaker size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">{t('WKU Lab Assistant', '温肯实验室助手')}</h3>
+                    <p className="text-[10px] opacity-80">{t('Online | Management Support', '在线 | 管理支持')}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsChatOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {messages.map((msg, i) => (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "flex",
+                      msg.role === 'user' ? "justify-end" : "justify-start"
+                    )}
+                  >
+                    <div className={cn(
+                      "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
+                      msg.role === 'user' 
+                        ? "bg-emerald-600 text-white rounded-tr-none" 
+                        : "bg-slate-100 text-slate-800 rounded-tl-none"
+                    )}>
+                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-p:m-0">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="p-4 border-t border-slate-100">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder={t("Ask about equipment or safety...", "询问器材或安全相关问题...")}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={!input.trim() || isTyping}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 transition-all"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 text-center">
+                  {t('Powered by Gemini AI for WKU Biology Department', '由 Gemini AI 为温肯生物系提供支持')}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 py-12 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-[#003366] p-1.5 rounded-lg">
+                  <Beaker className="text-white w-5 h-5" />
+                </div>
+                <span className="font-bold text-xl tracking-tight text-[#003366]">WKU BioLab</span>
+              </div>
+              <p className="text-slate-500 text-sm max-w-sm">
+                {t('The official BioLab Equipment Management System of Wenzhou-Kean University. Providing technical excellence and safety in laboratory education.', '温州肯恩大学官方生物实验室器材管理系统。在实验室教育中提供卓越的技术和安全保障。')}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">{t('Quick Links', '快速链接')}</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><button onClick={() => setActiveTab('equipment')} className="hover:text-emerald-600">{t('Equipment Wiki', '器材维基')}</button></li>
+                <li><button onClick={() => setActiveTab('tutorials')} className="hover:text-emerald-600">{t('Tutorials', '教学')}</button></li>
+                <li><button onClick={() => setActiveTab('safety')} className="hover:text-emerald-600">{t('Safety Protocols', '安全规范')}</button></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">{t('Contact Us', '联系我们')}</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li>{t('Wenzhou-Kean University, Biology Department', '温州肯恩大学，生物系')}</li>
+                <li>{t('Science Building, C101', '理学楼，C101')}</li>
+                <li>lab-support@wku.edu.cn</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-slate-100 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-slate-400">© 2026 Wenzhou-Kean University. {t('Web Design Course Project.', '网页设计课程项目。')}</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
