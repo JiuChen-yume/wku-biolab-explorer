@@ -362,7 +362,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '免疫检测、微生物学、教学实验。',
     manufacturer: 'Tecan',
     model: 'Infinite E Plex',
-    image: 'https://lifesciences.tecan.cn/plate_readers/fluorescence_absorbance_luminescence?p=tab--7#'
+    image: 'https://img1.17img.cn/17img/images/202511/pic/c03224bf-9e8a-4fe1-b7e1-295067f02509.jpg'
   },
   {
     id: 'biorad-chemidoc-mp',
