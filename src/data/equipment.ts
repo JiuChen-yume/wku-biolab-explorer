@@ -8,7 +8,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Microscopy',
     description: 'A high-precision optical instrument used for viewing small samples that are not visible to the naked eye.',
     descriptionZh: '一种用于观察肉眼不可见微小样本的高精度光学仪器。',
-    image: 'https://picsum.photos/seed/microscope/800/600',
+    image: 'https://www.labfriend.com.au/_next/image?url=https%3A%2F%2Flabfriendcoredataprod.blob.core.windows.net%2Flabfriendcore-data-prod%2Fimages%2F6081714_compound-microscope-obl-127-41040100-wf10x20-led_0.jpeg&w=1920&q=75',
     usage: 'Observe cellular structures and microorganisms.',
     usageZh: '观察细胞结构和微生物。',
     scenarios: 'Biology labs, pathology, microbiology.',
@@ -41,7 +41,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'General',
     description: 'A laboratory tool commonly used in biology to transport a measured volume of liquid.',
     descriptionZh: '生物实验室中常用的用于转移精确体积液体的工具。',
-    image: 'https://picsum.photos/seed/pipette/800/600',
+    image: 'https://cdn.sciket.com/products/PG-SADI0001-11.png',
     usage: 'Transfer precise volumes of reagents.',
     usageZh: '转移精确体积的试剂。',
     scenarios: 'Molecular biology, chemistry, clinical labs.',
@@ -76,7 +76,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Microscopy',
     description: 'Thin glass sheets used to hold specimens for microscopy.',
     descriptionZh: '用于放置显微镜观察标本的薄玻璃片。',
-    image: 'https://picsum.photos/seed/slides/800/600',
+    image: 'https://iirorwxhpkiolj5p.ldycdn.com/cloud/loBpnKkilpSRrjknoopniq/1.jpg',
     usage: 'Mounting specimens for observation.',
     usageZh: '装载标本以供观察。',
     scenarios: 'Histology, cell biology.',
@@ -99,7 +99,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'General',
     description: 'Shallow cylindrical glass or plastic lidded dish used to culture cells.',
     descriptionZh: '用于培养细胞的浅圆柱形玻璃或塑料带盖器皿。',
-    image: 'https://picsum.photos/seed/petridish/800/600',
+    image: 'https://rainbowbiotech.com.tw/upload/product/202503131705400.jpg',
     usage: 'Culturing bacteria, fungi, or small mosses.',
     usageZh: '培养细菌、真菌或小型苔藓。',
     scenarios: 'Microbiology, botany.',
@@ -122,7 +122,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Glassware',
     description: 'Common laboratory glassware consisting of a finger-like length of glass.',
     descriptionZh: '常见的实验室玻璃器皿，由手指状长度的玻璃组成。',
-    image: 'https://picsum.photos/seed/testtube/800/600',
+    image: 'https://www.flmedical.com/wp-content/uploads/2023/11/21075-3.png',
     usage: 'Holding, mixing, or heating small quantities of chemicals.',
     usageZh: '盛放、混合或加热少量化学品。',
     scenarios: 'General chemistry, biology.',
@@ -145,7 +145,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Glassware',
     description: 'A cylindrical container used for stirring, mixing and heating liquids.',
     descriptionZh: '用于搅拌、混合和加热液体的圆柱形容器。',
-    image: 'https://picsum.photos/seed/beaker/800/600',
+    image: 'https://m.media-amazon.com/images/I/61VYj+9V9wL._AC_SX679_.jpg',
     usage: 'Preparing solutions and holding reagents.',
     usageZh: '配制溶液和盛放试剂。',
     scenarios: 'General lab work.',
@@ -168,7 +168,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Centrifugation',
     description: 'High-strength tubes designed to fit in centrifuge rotors.',
     descriptionZh: '设计用于离心机转子的高强度管。',
-    image: 'https://picsum.photos/seed/centrifugetube/800/600',
+    image: 'https://lmicotw.com/wp-content/uploads/PS_MT.jpg',
     usage: 'Separating components of a mixture.',
     usageZh: '分离混合物的成分。',
     scenarios: 'DNA extraction, protein purification.',
@@ -191,7 +191,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Centrifugation',
     description: 'A machine with a rapidly rotating container that applies centrifugal force.',
     descriptionZh: '一种带有快速旋转容器、利用离心力的机器。',
-    image: 'https://picsum.photos/seed/centrifuge/800/600',
+    image: 'https://www.rwdls.com/Public/Uploads/uploadfile/images/20220804/2.jpg',
     usage: 'Separating substances of different densities.',
     usageZh: '分离不同密度的物质。',
     scenarios: 'Blood analysis, cell harvesting.',
@@ -214,7 +214,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'General',
     description: 'A simple device used commonly in laboratories to mix small vials of liquid.',
     descriptionZh: '实验室中常用的用于混合小瓶液体的简单设备。',
-    image: 'https://picsum.photos/seed/vortex/800/600',
+    image: 'http://zh.olabosci.com/olabosci/2.1.jpg',
     usage: 'Rapid mixing of samples in tubes.',
     usageZh: '快速混合管中的样品。',
     scenarios: 'Reagent preparation, cell resuspension.',
@@ -237,7 +237,7 @@ const baseEquipmentData: Equipment[] = [
     category: 'Safety',
     description: 'Equipment worn to minimize exposure to hazards.',
     descriptionZh: '为尽量减少暴露于危险中而穿着的装备。',
-    image: 'https://picsum.photos/seed/ppe/800/600',
+    image: 'https://www.tronexcompany.cn/wp-content/uploads/2020/01/lab-safety-ppe-blog-1.jpeg',
     usage: 'Protecting the body from chemicals and biohazards.',
     usageZh: '保护身体免受化学品和生物危害。',
     scenarios: 'All laboratory work.',
@@ -675,7 +675,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于透射光条件下观察细胞、组织和微生物。',
     scenarios: 'Teaching labs, routine biology.',
     scenariosZh: '教学实验、常规生物观察。',
-    image: 'https://picsum.photos/seed/light-microscope/800/600'
+    image: 'https://www.labfriend.com.au/_next/image?url=https%3A%2F%2Flabfriendcoredataprod.blob.core.windows.net%2Flabfriendcore-data-prod%2Fimages%2F6081714_compound-microscope-obl-127-41040100-wf10x20-led_0.jpeg&w=1920&q=75'
   },
   {
     id: 'dissecting-microscope',
@@ -688,7 +688,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于样品分拣、解剖及表面观察时获得立体视野。',
     scenarios: 'Zoology, botany, teaching labs.',
     scenariosZh: '动物学、植物学、教学实验。',
-    image: 'https://picsum.photos/seed/dissecting-microscope/800/600'
+    image: 'https://www.labfriend.com.au/_next/image?url=https%3A%2F%2Flabfriendcoredataprod.blob.core.windows.net%2Flabfriendcore-data-prod%2Fimages%2F6058593_stereo-zoom-microscope-digital-set-kern-ozl-466consisting-of-c-mount-adapter-tablet-camera-kern-241_0.jpeg&w=1920&q=75'
   },
   {
     id: 'electronic-balance',
@@ -701,7 +701,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于溶液配制及定量实验中的精确称量。',
     scenarios: 'General lab work, analytical chemistry.',
     scenariosZh: '常规实验、分析化学。',
-    image: 'https://picsum.photos/seed/electronic-balance/800/600'
+    image: 'https://www.tjdat.com/UpLoadFiles/Images/2404300350547948.jpg'
   },
   {
     id: 'pipette-gun',
@@ -714,7 +714,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于样品制备、稀释和试剂添加中的精确定量移液。',
     scenarios: 'Molecular biology, cell culture.',
     scenariosZh: '分子生物学、细胞培养。',
-    image: 'https://www.thermofisher.cn/TFS-Assets/LPD/product-images/4641080N-650x600.jpg'
+    image: 'https://www.blue-raybio.com/uploads/images/product/Liquid_Handling/Blue-Ray_Biotech_BlueSwan_Pipette_Controller.png'
   },
   {
     id: 'water-bath',
@@ -727,7 +727,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于试剂孵育、培养基预热及温敏实验流程。',
     scenarios: 'Biochemistry, microbiology, teaching labs.',
     scenariosZh: '生物化学、微生物学、教学实验。',
-    image: 'https://img.nbchao.com/imgs/200/2019/09/04/1124530145582288.jpg'
+    image: 'https://11606911.s21i.faiusr.com/4/2/ABUIABAEGAAgpuuiywYo_MTPywEwoAY4oAY.png'
   },
   {
     id: 'spectrophotometer',
@@ -740,7 +740,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于核酸、蛋白和有色化合物的定量测定。',
     scenarios: 'Biochemistry, analytical chemistry.',
     scenariosZh: '生物化学、分析化学。',
-    image: 'https://www.shimadzu.com.cn/an/sites/shimadzu.com.cn.an/files/upload/2018/7/20180726_fx_01.jpg'
+    image: 'https://omo-oss-image.thefastimg.com/portal-saas/pg2024053118141886245/cms/image/a40e28bb-5c53-4503-9ce7-2fe36dbe2b41.png'
   },
   {
     id: 'general-centrifuge',
@@ -753,7 +753,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于常规样品处理中分离细胞、沉淀和上清。',
     scenarios: 'Cell biology, microbiology.',
     scenariosZh: '细胞生物学、微生物学。',
-    image: 'https://picsum.photos/seed/general-centrifuge/800/600'
+    image: 'https://www.rwdls.com/Public/Uploads/uploadfile/images/20220804/1.jpg'
   },
   {
     id: 'electrophoresis-apparatus',
@@ -766,7 +766,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于按大小和电荷分离 DNA、RNA 或蛋白。',
     scenarios: 'Molecular biology, protein analysis.',
     scenariosZh: '分子生物学、蛋白分析。',
-    image: 'http://www.liuyi17.com/uploadfile/202112/14e89d1cd38b6bc.jpg'
+    image: 'http://www.qibusw.com/pic/img/20150625/1435192523055856270.png'
   },
   {
     id: 'incubator',
@@ -779,7 +779,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于微生物、样品或反应体系的恒温孵育。',
     scenarios: 'Microbiology, cell culture support.',
     scenariosZh: '微生物学、细胞培养辅助。',
-    image: 'https://picsum.photos/seed/incubator/800/600'
+    image: 'https://www.zhulansh.com/uploads/202311/20/52f808b2fed111d0.png'
   },
   {
     id: 'laboratory-refrigerator',
@@ -792,7 +792,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于试剂、培养基和样品的控温冷藏保存。',
     scenarios: 'General laboratory storage.',
     scenariosZh: '实验室常规储存。',
-    image: 'https://picsum.photos/seed/laboratory-refrigerator/800/600'
+    image: 'http://www.zkmlbx.com/uploads/allimg/200110/1-20011014563B03.jpg'
   },
   {
     id: 'microwave-oven',
@@ -805,7 +805,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '在符合实验规范时快速加热适配溶液或琼脂培养基。',
     scenarios: 'Media preparation, teaching labs.',
     scenariosZh: '培养基制备、教学实验。',
-    image: 'https://picsum.photos/seed/laboratory-microwave/800/600'
+    image: 'https://m.media-amazon.com/images/I/617lX16RzgL._AC_SX300_SY300_QL70_ML2_.jpg'
   },
   {
     id: 'alcohol-burner',
@@ -818,7 +818,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于局部加热，并辅助简单无菌操作。',
     scenarios: 'Teaching labs, microbiology.',
     scenariosZh: '教学实验、微生物学。',
-    image: 'https://picsum.photos/seed/alcohol-burner/800/600'
+    image: 'https://i.ebayimg.com/thumbs/images/g/BfgAAeSwMCVpW1wE/s-l500.jpg'
   },
   {
     id: 'oil-immersion-objective',
@@ -831,7 +831,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于高倍率下提升细胞或微生物精细结构的分辨率。',
     scenarios: 'Microbiology, microscopy teaching.',
     scenariosZh: '微生物学、显微教学。',
-    image: 'https://picsum.photos/seed/oil-immersion-objective/800/600'
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU2hJ19lS0xbkomgm23WwIPo2MjisC6zPorQ&s'
   },
   {
     id: 'co2-anesthesia-chamber',
@@ -844,7 +844,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于经批准动物实验前的标准化诱导处理。',
     scenarios: 'Animal research facilities.',
     scenariosZh: '动物实验平台。',
-    image: 'https://picsum.photos/seed/co2-anesthesia-chamber/800/600'
+    image: 'https://img03.71360.com/w3/j0x0dj/20260417/71410e32a56746055232bad19e283eec.png?w=600'
   },
   {
     id: 'warming-plate',
@@ -857,7 +857,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于样品制备或短时孵育中的表面恒温。',
     scenarios: 'Sample preparation, teaching labs.',
     scenariosZh: '样品制备、教学实验。',
-    image: 'https://picsum.photos/seed/warming-plate/800/600'
+    image: 'https://www.pathtech.com.au/productimages/032-H3770-HS-E.jpg'
   },
   {
     id: 'co2-asphyxiation-equipment',
