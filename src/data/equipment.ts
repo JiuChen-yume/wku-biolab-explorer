@@ -527,8 +527,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '材料科学、高分子分析。',
     manufacturer: 'PerkinElmer',
     model: 'STA8000-Spectrum3',
-    image: 'https://shop.perkinelmer.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,width=1200/en-AU/sfsites/c/cms/delivery/media/MCQ7COCF4ZWFBCHG7JP5ZXPJBD7Q?version=1.1&channelId=0apPs0000000Jtt&oid=00DHu000002tVOV',
-    'https://shop.perkinelmer.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,width=1200/https://perkinelmer.widen.net/content/6ia522zn8i/jpeg/S3Optima.jpeg?position=c&color=ffffffff&quality=80&u=hqlp4q&use=vcuym'
+    image: 'https://shop.perkinelmer.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,width=1200/en-AU/sfsites/c/cms/delivery/media/MCQ7COCF4ZWFBCHG7JP5ZXPJBD7Q?version=1.1&channelId=0apPs0000000Jtt&oid=00DHu000002tVOV'
   },
   {
     id: 'agilent-1290-infinity-ii',
