@@ -332,7 +332,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '细胞生物学、荧光成像、教学展示。',
     manufacturer: 'Keyence',
     model: 'BZ-X800LE',
-    image: 'https://www.keyence.com.cn/Images/BZ-X800LE_1241519.png'
+    image: 'https://www.keyence.com.cn/img/products/model/AS_125031_L.jpg'
   },
   {
     id: 'varioskan-lux',
@@ -347,7 +347,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: 'ELISA、细胞实验、分子生物学。',
     manufacturer: 'Thermo Fisher Scientific',
     model: 'Varioskan LUX',
-    image: 'https://www.thermofisher.cn/TFS-Assets/LCD/product-images/varioskan-lux-left.jpg'
+    image: 'https://www.thermofisher.cn/content/dam/LifeTech/global/life-sciences/bid/pca-ais/2026/02/lux-left.png'
   },
   {
     id: 'tecan-infinite-eplex',
@@ -362,7 +362,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '免疫检测、微生物学、教学实验。',
     manufacturer: 'Tecan',
     model: 'Infinite E Plex',
-    image: 'https://picsum.photos/seed/tecan-infinite-eplex/800/600'
+    image: 'https://lifesciences.tecan.cn/plate_readers/fluorescence_absorbance_luminescence?p=tab--7#'
   },
   {
     id: 'biorad-chemidoc-mp',
@@ -527,7 +527,8 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '材料科学、高分子分析。',
     manufacturer: 'PerkinElmer',
     model: 'STA8000-Spectrum3',
-    image: 'https://picsum.photos/seed/sta-ftir/800/600'
+    image: 'https://shop.perkinelmer.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,width=1200/en-AU/sfsites/c/cms/delivery/media/MCQ7COCF4ZWFBCHG7JP5ZXPJBD7Q?version=1.1&channelId=0apPs0000000Jtt&oid=00DHu000002tVOV',
+    'https://shop.perkinelmer.com/cdn-cgi/image/fit=scale-down,format=auto,onerror=redirect,width=1200/https://perkinelmer.widen.net/content/6ia522zn8i/jpeg/S3Optima.jpeg?position=c&color=ffffffff&quality=80&u=hqlp4q&use=vcuym'
   },
   {
     id: 'agilent-1290-infinity-ii',
@@ -557,7 +558,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: '环境分析、质量控制。',
     manufacturer: 'Thermo Fisher Scientific',
     model: 'TRACE 1310',
-    image: 'https://www.thermofisher.com/TFS-Assets/CMD/product-images/Trace-1310-with-Auxiliary-Oven-1800x1348.jpg'
+    image: 'https://www.thermofisher.com/TFS-Assets/CMD/product-images/Trace-1310-with-Auxiliary-Oven-1800x1348.jpg-650.jpg'
   },
   {
     id: 'novocyte',
@@ -647,7 +648,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     scenariosZh: 'qPCR、分子教学实验。',
     manufacturer: 'ABI',
     model: 'QuantStudio 3',
-    image: 'https://www.thermofisher.com/TFS-Assets/LSG/product-images/QuantStudio-3-right-650x635.jpg'
+    image: 'https://www.thermofisher.com/TFS-Assets/LSG/product-images/QuantStudio-3-right-650x635.jpg-650.jpg'
   },
   {
     id: 'spinsolve-80',
@@ -740,7 +741,7 @@ const catalogEquipmentData: CatalogEquipment[] = [
     usageZh: '用于核酸、蛋白和有色化合物的定量测定。',
     scenarios: 'Biochemistry, analytical chemistry.',
     scenariosZh: '生物化学、分析化学。',
-    image: 'https://omo-oss-image.thefastimg.com/portal-saas/pg2024053118141886245/cms/image/a40e28bb-5c53-4503-9ce7-2fe36dbe2b41.png'
+    image: 'https://www.westlab.com.au/media/catalog/product/0/5/050419-2000_img_01.png?optimize=medium&bg-color=255,255,255&fit=bounds&height=1000&width=1000&canvas=1000:1000'
   },
   {
     id: 'general-centrifuge',
