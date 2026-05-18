@@ -60,3 +60,16 @@ export interface Message {
   role: 'user' | 'model';
   content: string;
 }
+
+export interface Student {
+  id: number;
+  studentNumber: string;
+  name: string;
+}
+
+export interface QuizAttemptSummary {
+  id: number;
+  score: number;
+  totalQuestions: number;
+  submittedAt: string;
+}

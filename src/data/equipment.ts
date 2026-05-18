@@ -1,6 +1,6 @@
 import { Equipment } from '../types';
 
-export const equipmentData: Equipment[] = [
+const baseEquipmentData: Equipment[] = [
   {
     id: 'microscope',
     name: 'Compound Light Microscope',
@@ -253,4 +253,645 @@ export const equipmentData: Equipment[] = [
     status: 'Available',
     assetId: 'WKU-BIO-010'
   }
+];
+
+type CatalogEquipment = Pick<
+  Equipment,
+  'id' | 'name' | 'nameZh' | 'category' | 'description' | 'descriptionZh' | 'usage' | 'usageZh' | 'scenarios' | 'scenariosZh'
+> & {
+  image: string;
+  model?: string;
+  manufacturer?: string;
+};
+
+const defaultStepsByCategory: Record<Equipment['category'], { en: string[]; zh: string[] }> = {
+  Microscopy: {
+    en: ['Check the optical path and power supply.', 'Load the sample correctly.', 'Start with low magnification before fine adjustment.'],
+    zh: ['检查光路与电源。', '正确放置样品。', '先从低倍率开始，再进行精细调节。']
+  },
+  Centrifugation: {
+    en: ['Confirm rotor and tube compatibility.', 'Balance the load carefully.', 'Set speed, temperature, and time before starting.'],
+    zh: ['确认转子与离心管匹配。', '仔细平衡样品。', '启动前设置转速、温度和时间。']
+  },
+  Molecular: {
+    en: ['Prepare qualified samples and reagents.', 'Select the correct assay program.', 'Review results and export data after the run.'],
+    zh: ['准备合格样品与试剂。', '选择正确的检测程序。', '运行结束后复核并导出数据。']
+  },
+  General: {
+    en: ['Inspect the instrument before use.', 'Set operating parameters according to the protocol.', 'Clean and shut down after use.'],
+    zh: ['使用前检查设备状态。', '按实验方案设置参数。', '使用后清洁并关机。']
+  },
+  Glassware: {
+    en: ['Inspect for damage before use.', 'Use the correct vessel for the task.', 'Clean and store after use.'],
+    zh: ['使用前检查是否破损。', '按任务选择合适器具。', '使用后清洁并归位。']
+  },
+  Safety: {
+    en: ['Inspect safety equipment before use.', 'Operate according to the approved procedure.', 'Report abnormal conditions immediately.'],
+    zh: ['使用前检查安全设备。', '按批准流程操作。', '发现异常立即上报。']
+  }
+};
+
+const defaultSafetyByCategory: Record<Equipment['category'], { en: string[]; zh: string[] }> = {
+  Microscopy: {
+    en: ['Avoid touching optical surfaces directly.', 'Lower illumination before changing samples.'],
+    zh: ['避免直接接触光学表面。', '更换样品前先降低光强。']
+  },
+  Centrifugation: {
+    en: ['Never open the lid while running.', 'Do not exceed rated tube or rotor limits.'],
+    zh: ['运行中严禁开盖。', '不得超过离心管或转子的额定限制。']
+  },
+  Molecular: {
+    en: ['Use clean consumables to prevent contamination.', 'Follow biosafety and waste-disposal rules.'],
+    zh: ['使用洁净耗材以避免污染。', '遵守生物安全与废弃物处理规范。']
+  },
+  General: {
+    en: ['Check cables, seals, and heat sources before use.', 'Follow instrument-specific SOPs.'],
+    zh: ['使用前检查线缆、密封和热源。', '遵守设备专属 SOP。']
+  },
+  Glassware: {
+    en: ['Handle glass carefully.', 'Discard damaged items immediately.'],
+    zh: ['小心拿取玻璃器皿。', '发现破损立即报废。']
+  },
+  Safety: {
+    en: ['Use only when trained.', 'Keep the surrounding area clear.'],
+    zh: ['仅限受训人员操作。', '保持周边区域畅通。']
+  }
+};
+
+const catalogEquipmentData: CatalogEquipment[] = [
+  {
+    id: 'keyence-bz-x800le',
+    name: 'All-in-one Inverted Fluorescence Microscope',
+    nameZh: '一体式倒置荧光显微镜',
+    category: 'Microscopy',
+    description: 'Integrated fluorescence imaging system for rapid observation and documentation of cultured cells and tissue samples.',
+    descriptionZh: '用于细胞与组织样品快速观察、拍摄和记录的一体化荧光成像系统。',
+    usage: 'Capture brightfield and fluorescence images for cell morphology, localization, and comparison studies.',
+    usageZh: '用于明场及荧光成像，可进行细胞形态观察、荧光定位和对比分析。',
+    scenarios: 'Cell biology, fluorescence imaging, teaching demonstrations.',
+    scenariosZh: '细胞生物学、荧光成像、教学展示。',
+    manufacturer: 'Keyence',
+    model: 'BZ-X800LE',
+    image: 'https://www.keyence.com.cn/Images/BZ-X800LE_1241519.png'
+  },
+  {
+    id: 'varioskan-lux',
+    name: 'Multimode Microplate Reader',
+    nameZh: '多功能微孔板读数仪（酶标仪）',
+    category: 'Molecular',
+    description: 'Multimode plate reader for absorbance, fluorescence, luminescence, and time-resolved fluorescence assays.',
+    descriptionZh: '可进行吸光度、荧光、化学发光和时间分辨荧光检测的多功能酶标平台。',
+    usage: 'Quantify biochemical reactions, enzyme kinetics, viability, and nucleic-acid or protein assays in microplates.',
+    usageZh: '用于微孔板中生化反应、酶动力学、细胞活性以及核酸/蛋白检测的定量分析。',
+    scenarios: 'ELISA, cell assays, molecular biology.',
+    scenariosZh: 'ELISA、细胞实验、分子生物学。',
+    manufacturer: 'Thermo Fisher Scientific',
+    model: 'Varioskan LUX',
+    image: 'https://www.thermofisher.cn/TFS-Assets/LCD/product-images/varioskan-lux-left.jpg'
+  },
+  {
+    id: 'tecan-infinite-eplex',
+    name: 'Microplate Reader',
+    nameZh: '酶标仪',
+    category: 'Molecular',
+    description: 'Whole-spectrum microplate detection platform for routine quantitative assays.',
+    descriptionZh: '适用于常规定量检测的全波长微孔板检测平台。',
+    usage: 'Measure absorbance-based assays such as ELISA, growth curves, and colorimetric reactions.',
+    usageZh: '用于 ELISA、微生物生长曲线和比色反应等吸光度检测。',
+    scenarios: 'Immunoassay, microbiology, teaching labs.',
+    scenariosZh: '免疫检测、微生物学、教学实验。',
+    manufacturer: 'Tecan',
+    model: 'Infinite E Plex',
+    image: 'https://picsum.photos/seed/tecan-infinite-eplex/800/600'
+  },
+  {
+    id: 'biorad-chemidoc-mp',
+    name: 'Gel Imaging System',
+    nameZh: '凝胶成像系统',
+    category: 'Molecular',
+    description: 'Digital imaging platform for gels, blots, and chemiluminescent signals.',
+    descriptionZh: '用于凝胶、印迹和化学发光信号采集的数字成像平台。',
+    usage: 'Document nucleic-acid gels, protein blots, and fluorescence or chemiluminescence results.',
+    usageZh: '用于核酸凝胶、蛋白印迹以及荧光/化学发光结果记录。',
+    scenarios: 'PCR verification, western blot, protein analysis.',
+    scenariosZh: 'PCR 验证、Western blot、蛋白分析。',
+    manufacturer: 'Bio-Rad',
+    model: 'ChemiDoc MP',
+    image: 'https://www.bio-rad.com/sites/default/files/styles/brc_featured_sku_275x275_/public/webroot/web/images/lsr/products/imaging_bioinformatics/sku_view/global/17001402-chemidoc-mp-imaging-system.webp?itok=h46wQwYD'
+  },
+  {
+    id: 'nikon-ti2-u',
+    name: 'Inverted Fluorescence Microscope',
+    nameZh: '倒置荧光显微镜',
+    category: 'Microscopy',
+    description: 'Inverted microscope platform for high-quality live-cell and fluorescence imaging.',
+    descriptionZh: '面向活细胞与荧光观察的高品质倒置显微平台。',
+    usage: 'Observe adherent cells, monitor morphology, and acquire fluorescence images with stable focus.',
+    usageZh: '用于贴壁细胞观察、形态监测及稳定荧光成像。',
+    scenarios: 'Cell culture, live-cell imaging, fluorescence microscopy.',
+    scenariosZh: '细胞培养、活细胞成像、荧光显微观察。',
+    manufacturer: 'Nikon',
+    model: 'Ti2-U',
+    image: 'https://downloads.microscope.healthcare.nikon.com/ms100th/imager/productphotos/64/DS50MTi2-series_2848d85ec06e96714f87d53a6c477efc.jpg'
+  },
+  {
+    id: 'roche-lightcycler-96',
+    name: 'Real-time PCR System',
+    nameZh: '实时荧光定量 PCR 仪',
+    category: 'Molecular',
+    description: 'Real-time PCR instrument for amplification and fluorescence-based quantification of nucleic acids.',
+    descriptionZh: '用于核酸扩增与荧光定量分析的实时 PCR 平台。',
+    usage: 'Perform gene-expression analysis, pathogen detection, and relative or absolute quantification.',
+    usageZh: '用于基因表达分析、病原检测以及相对或绝对定量。',
+    scenarios: 'qPCR, molecular diagnostics, gene-expression studies.',
+    scenariosZh: 'qPCR、分子诊断、基因表达研究。',
+    manufacturer: 'Roche',
+    model: 'LightCycler 96',
+    image: 'https://pim-media.roche.com/Images/INS_2691_LightCycler96.jpg?scl=1'
+  },
+  {
+    id: 'abi-quantstudio-6',
+    name: 'Real-time PCR System',
+    nameZh: '荧光定量 PCR 系统',
+    category: 'Molecular',
+    description: 'Flexible quantitative PCR platform for medium-throughput nucleic-acid analysis.',
+    descriptionZh: '适用于中等通量核酸检测的灵活型荧光定量 PCR 平台。',
+    usage: 'Support multiplex qPCR, genotyping, and expression analysis workflows.',
+    usageZh: '用于多重 qPCR、基因分型及表达分析。',
+    scenarios: 'Molecular biology, translational research.',
+    scenariosZh: '分子生物学、转化研究。',
+    manufacturer: 'ABI',
+    model: 'QuantStudio 6',
+    image: 'https://www.thermofisher.cn/TFS-Assets/LSG/product-images/QuantStudio6_RightRotate-635.jpg-650.jpg'
+  },
+  {
+    id: 'beckman-optima-max-xp',
+    name: 'Ultra-speed Refrigerated Centrifuge',
+    nameZh: '超高速冷冻离心机',
+    category: 'Centrifugation',
+    description: 'High-speed refrigerated centrifuge for separating nanoscale or low-density biological components.',
+    descriptionZh: '用于分离纳米级或低密度生物组分的高速冷冻离心设备。',
+    usage: 'Pellet viruses, exosomes, lipoproteins, and other fine particles under controlled temperature.',
+    usageZh: '用于在控温条件下沉降病毒、外泌体、脂蛋白等细小颗粒。',
+    scenarios: 'Cell fractionation, vesicle isolation, molecular biology.',
+    scenariosZh: '细胞组分分离、囊泡提取、分子生物学。',
+    manufacturer: 'Beckman Coulter',
+    model: 'Optima MAX-XP',
+    image: 'https://media.beckman.com/-/media/centrifugation/products/instruments/ultracentrifuge/optima-max-xp/centrifuge-ultracentrifuge-optima-max-xp-full-view-2017-04.png?rev=bcf3103e340d4243b6f3a6a05343dca4'
+  },
+  {
+    id: 'odyssey-clx',
+    name: 'Infrared Laser Imaging System',
+    nameZh: '双色红外激光成像系统',
+    category: 'Molecular',
+    description: 'Dual-channel near-infrared imaging system for quantitative blot and membrane detection.',
+    descriptionZh: '用于膜上样品定量检测的双通道近红外成像系统。',
+    usage: 'Acquire low-background images for western blot normalization and multiplex fluorescence analysis.',
+    usageZh: '用于 Western blot 归一化及多重荧光分析，具备低背景成像优势。',
+    scenarios: 'Protein analysis, membrane imaging.',
+    scenariosZh: '蛋白分析、膜成像。',
+    manufacturer: 'LI-COR',
+    model: 'Odyssey CLx',
+    image: 'https://sklbc.sysu.edu.cn/sites/default/files/inline-images/111_1.jpg'
+  },
+  {
+    id: 'zeiss-lsm900',
+    name: 'Confocal Microscope',
+    nameZh: '激光共聚焦显微镜',
+    category: 'Microscopy',
+    description: 'Confocal imaging platform for optical sectioning and high-resolution fluorescence microscopy.',
+    descriptionZh: '用于光学切片与高分辨荧光观察的共聚焦成像平台。',
+    usage: 'Acquire layered images, reconstruct 3D structures, and reduce out-of-focus background.',
+    usageZh: '用于分层采集、三维重建并降低离焦背景。',
+    scenarios: 'Cell biology, tissue imaging, 3D microscopy.',
+    scenariosZh: '细胞生物学、组织成像、三维显微分析。',
+    manufacturer: 'Zeiss',
+    model: 'LSM 900',
+    image: 'https://www.zeiss.com/content/dam/rms/reference-master/products/light/confocal/lsm-900-mat/lsm900-mat_stage.jpg'
+  },
+  {
+    id: 'shimadzu-aa7000',
+    name: 'Atomic Absorption Spectrometer',
+    nameZh: '原子吸收光谱仪',
+    category: 'General',
+    description: 'Elemental-analysis instrument for measuring metal concentrations in liquid samples.',
+    descriptionZh: '用于液体样品中金属元素含量检测的元素分析仪器。',
+    usage: 'Quantify trace metals for environmental, biological, and material samples.',
+    usageZh: '用于环境、生物及材料样品中痕量金属的定量检测。',
+    scenarios: 'Environmental analysis, materials testing.',
+    scenariosZh: '环境分析、材料检测。',
+    manufacturer: 'Shimadzu',
+    model: 'AA-7000F/G',
+    image: 'https://www.shimadzu.com/an/sites/shimadzu.com.an/files/pim/pim_prod_cate_basic/265/AA-7000.jpg'
+  },
+  {
+    id: 'waters-e2695',
+    name: 'High Performance Liquid Chromatograph',
+    nameZh: '高效液相色谱仪',
+    category: 'General',
+    description: 'Liquid chromatography system for separating, identifying, and quantifying compounds.',
+    descriptionZh: '用于化合物分离、鉴定与定量的液相色谱系统。',
+    usage: 'Analyze small molecules, purity, retention behavior, and concentration in complex samples.',
+    usageZh: '用于复杂样品中小分子、纯度、保留行为和浓度分析。',
+    scenarios: 'Pharmaceutical analysis, biochemistry, food testing.',
+    scenariosZh: '药物分析、生物化学、食品检测。',
+    manufacturer: 'Waters',
+    model: 'e2695',
+    image: 'https://help.waters.com/content/dam/waters/en/Photography/Products/Instruments/Separations/hplc/alliance/alliance-hplc-system-2695-2489-angle.jpg.82.resize/img.jpg'
+  },
+  {
+    id: 'malvern-zetasizer-lab',
+    name: 'Nanoparticle Size Analyzer',
+    nameZh: '纳米粒度分析仪',
+    category: 'General',
+    description: 'Analyzer for particle size, molecular size, and zeta potential in dispersions.',
+    descriptionZh: '用于分散体系中粒径、分子尺寸和 Zeta 电位分析的仪器。',
+    usage: 'Characterize nanoparticle diameter, distribution, stability, and colloidal behavior.',
+    usageZh: '用于纳米颗粒粒径、分布、稳定性及胶体行为表征。',
+    scenarios: 'Nanomaterials, formulation development.',
+    scenariosZh: '纳米材料、制剂开发。',
+    manufacturer: 'Malvern Panalytical',
+    model: 'Zetasizer Lab',
+    image: 'https://dam.malvernpanalytical.com/a2b517b1-539c-42e1-b4a7-b338008e7b65/FRKL%20Zetasizer%20advance%20lab%20top%20view%20transparent_Original%20file.png?quality=90&width=526'
+  },
+  {
+    id: 'sta-ftir',
+    name: 'STA-FTIR Coupled System',
+    nameZh: '同步热分析仪-傅里叶变换红外光谱仪联用仪',
+    category: 'General',
+    description: 'Coupled thermal and infrared analysis system for tracking mass change and evolved gases.',
+    descriptionZh: '可同步跟踪质量变化与逸出气体信息的热分析-红外联用系统。',
+    usage: 'Study decomposition, oxidation, moisture loss, and gas evolution during heating.',
+    usageZh: '用于研究升温过程中的分解、氧化、失水及逸出气体。',
+    scenarios: 'Materials science, polymer analysis.',
+    scenariosZh: '材料科学、高分子分析。',
+    manufacturer: 'PerkinElmer',
+    model: 'STA8000-Spectrum3',
+    image: 'https://picsum.photos/seed/sta-ftir/800/600'
+  },
+  {
+    id: 'agilent-1290-infinity-ii',
+    name: 'Ultra High Performance Liquid Chromatograph',
+    nameZh: '超高效液相色谱仪',
+    category: 'General',
+    description: 'High-pressure chromatographic platform for fast, high-resolution separations.',
+    descriptionZh: '用于快速高分辨分离的高压液相色谱平台。',
+    usage: 'Improve throughput and resolution for complex-mixture separation and quantitation.',
+    usageZh: '用于复杂样品的高通量、高分辨分离与定量。',
+    scenarios: 'Analytical chemistry, pharmaceutical analysis.',
+    scenariosZh: '分析化学、药物分析。',
+    manufacturer: 'Agilent',
+    model: '1290 Infinity II',
+    image: 'https://www.agilent.com.cn/cs/publishingimages/gpc-sec-system-polymer-analysis-1260-infinity-ii-f-agilent-zoomtb.jpg'
+  },
+  {
+    id: 'trace-1310',
+    name: 'Gas Chromatograph',
+    nameZh: '气相色谱仪',
+    category: 'General',
+    description: 'Gas chromatography system for separating volatile and semi-volatile compounds.',
+    descriptionZh: '用于挥发性与半挥发性化合物分离分析的气相色谱系统。',
+    usage: 'Measure gaseous impurities, solvents, and volatile components in mixtures.',
+    usageZh: '用于气体杂质、溶剂及混合物中挥发性成分检测。',
+    scenarios: 'Environmental analysis, quality control.',
+    scenariosZh: '环境分析、质量控制。',
+    manufacturer: 'Thermo Fisher Scientific',
+    model: 'TRACE 1310',
+    image: 'https://www.thermofisher.com/TFS-Assets/CMD/product-images/Trace-1310-with-Auxiliary-Oven-1800x1348.jpg'
+  },
+  {
+    id: 'novocyte',
+    name: 'Flow Cytometer',
+    nameZh: '流式细胞仪',
+    category: 'Molecular',
+    description: 'Flow cytometry platform for rapid multi-parameter single-cell analysis.',
+    descriptionZh: '用于快速多参数单细胞分析的流式检测平台。',
+    usage: 'Analyze cell size, granularity, markers, apoptosis, and subpopulation distribution.',
+    usageZh: '用于细胞大小、颗粒度、标志物、凋亡及亚群分布分析。',
+    scenarios: 'Immunology, cell biology, clinical research.',
+    scenariosZh: '免疫学、细胞生物学、临床研究。',
+    manufacturer: 'Agilent',
+    model: 'NovoCyte',
+    image: 'https://www.agilent.com.cn/cs/publishingimages/NovoCyte-Opteon-center-01-320x320.jpg'
+  },
+  {
+    id: 'inspur-cluster',
+    name: 'Computer Cluster',
+    nameZh: '计算机集群',
+    category: 'General',
+    description: 'Shared computing infrastructure for high-volume data processing and analysis workflows.',
+    descriptionZh: '用于大规模数据处理与分析流程的共享计算基础设施。',
+    usage: 'Run bioinformatics, image analysis, simulation, and batch-processing tasks more efficiently.',
+    usageZh: '用于生物信息学、图像分析、仿真及批处理任务。',
+    scenarios: 'Computational biology, data science.',
+    scenariosZh: '计算生物学、数据科学。',
+    manufacturer: 'Inspur',
+    model: 'Inspur Cluster',
+    image: 'https://picsum.photos/seed/inspur-cluster/800/600'
+  },
+  {
+    id: 'waters-lcms',
+    name: 'UPLC-MS System',
+    nameZh: '超高效液相色谱-质谱联用仪',
+    category: 'General',
+    description: 'Chromatography-mass spectrometry platform for sensitive separation and molecular identification.',
+    descriptionZh: '兼具高效分离与分子鉴定能力的液相色谱-质谱联用平台。',
+    usage: 'Analyze peptides, metabolites, trace compounds, and molecular masses in complex samples.',
+    usageZh: '用于复杂样品中的肽段、代谢物、痕量化合物及分子量分析。',
+    scenarios: 'Proteomics, metabolomics, pharmaceutical analysis.',
+    scenariosZh: '蛋白质组学、代谢组学、药物分析。',
+    manufacturer: 'Waters',
+    model: 'M-Class Plus / ACQUITY UPLC H-Class Plus / Xevo',
+    image: 'https://www.waters.com/content/dam/waters/en/Photography/Products/Instruments/Separations/uplc/acquity-uplc-m-class/ACQUITY-UPLC-M-Class-Tuv-system.jpg.thumb.319.319.png'
+  },
+  {
+    id: 'ngc-quest-10-plus',
+    name: 'Protein Purification System',
+    nameZh: '蛋白纯化系统-FPLC',
+    category: 'Molecular',
+    description: 'Chromatography system for automated purification of proteins and biomolecules.',
+    descriptionZh: '用于蛋白及生物分子自动纯化的层析系统。',
+    usage: 'Perform affinity, ion-exchange, and size-exclusion purification workflows with reproducible gradients.',
+    usageZh: '用于亲和、离子交换和分子筛纯化，并实现可重复梯度控制。',
+    scenarios: 'Protein purification, biochemistry.',
+    scenariosZh: '蛋白纯化、生物化学。',
+    manufacturer: 'Bio-Rad',
+    model: 'NGC Quest 10 Plus',
+    image: 'https://www.bio-rad.com/sites/default/files/styles/brc_featured_sku_275x275_/public/webroot/web/images/lsr/products/chromatography/sku_view/global/ngc-quest-10-plus-system-SKU-788-0003-view.webp?itok=ZwJeNdAN'
+  },
+  {
+    id: 'cary-5000',
+    name: 'UV-Vis-NIR Spectrophotometer',
+    nameZh: '紫外可见光近红外光谱仪',
+    category: 'General',
+    description: 'Spectrophotometer for optical measurement from ultraviolet through near-infrared wavelengths.',
+    descriptionZh: '覆盖紫外至近红外波段的光谱检测仪器。',
+    usage: 'Measure absorbance, transmittance, and material optical properties across a broad wavelength range.',
+    usageZh: '用于宽波段吸光度、透过率及材料光学性质测定。',
+    scenarios: 'Materials, chemistry, optical characterization.',
+    scenariosZh: '材料、化学、光学表征。',
+    manufacturer: 'Agilent',
+    model: 'Cary 5000',
+    image: 'https://www.agilent.com.cn/cs/publishingimages/Cary-5000-uv-vis-nir-spectrophotometer-agilent_zoomtb.jpg'
+  },
+  {
+    id: 'quantstudio-3',
+    name: 'High-throughput Real-time PCR System',
+    nameZh: '高通量荧光定量 PCR',
+    category: 'Molecular',
+    description: 'Compact real-time PCR platform for routine quantitative nucleic-acid workflows.',
+    descriptionZh: '适用于常规定量核酸检测的紧凑型实时 PCR 平台。',
+    usage: 'Support routine expression analysis, genotyping, and teaching or service workflows.',
+    usageZh: '用于常规表达分析、基因分型以及教学和服务型检测。',
+    scenarios: 'qPCR, molecular teaching labs.',
+    scenariosZh: 'qPCR、分子教学实验。',
+    manufacturer: 'ABI',
+    model: 'QuantStudio 3',
+    image: 'https://www.thermofisher.com/TFS-Assets/LSG/product-images/QuantStudio-3-right-650x635.jpg'
+  },
+  {
+    id: 'spinsolve-80',
+    name: 'Benchtop NMR Spectrometer',
+    nameZh: '台式核磁共振波谱仪',
+    category: 'General',
+    description: 'Compact NMR platform for structural verification and reaction monitoring.',
+    descriptionZh: '用于结构确认与反应监测的紧凑型核磁共振平台。',
+    usage: 'Identify compounds, verify purity, and follow chemical transformations without a cryogen system.',
+    usageZh: '用于化合物鉴定、纯度确认及化学反应跟踪。',
+    scenarios: 'Organic chemistry, teaching, rapid screening.',
+    scenariosZh: '有机化学、教学、快速筛查。',
+    manufacturer: 'Magritek',
+    model: 'Spinsolve 80 Carbon Ultra',
+    image: 'https://magritek.com/wp-content/uploads/2026/03/SP80_0003-HDR-Edited_3.0-scaled.jpg'
+  },
+  {
+    id: 'light-microscope',
+    name: 'Light Microscope',
+    nameZh: '光学显微镜',
+    category: 'Microscopy',
+    description: 'Routine optical microscope for basic specimen observation.',
+    descriptionZh: '用于基础样本观察的常规光学显微镜。',
+    usage: 'Observe cells, tissues, and microorganisms under transmitted light.',
+    usageZh: '用于透射光条件下观察细胞、组织和微生物。',
+    scenarios: 'Teaching labs, routine biology.',
+    scenariosZh: '教学实验、常规生物观察。',
+    image: 'https://picsum.photos/seed/light-microscope/800/600'
+  },
+  {
+    id: 'dissecting-microscope',
+    name: 'Dissecting Microscope',
+    nameZh: '解剖显微镜',
+    category: 'Microscopy',
+    description: 'Low-magnification stereoscopic microscope for whole specimens and dissections.',
+    descriptionZh: '用于整体样本观察和解剖操作的低倍率立体显微镜。',
+    usage: 'Provide depth perception during specimen sorting, dissection, and surface inspection.',
+    usageZh: '用于样品分拣、解剖及表面观察时获得立体视野。',
+    scenarios: 'Zoology, botany, teaching labs.',
+    scenariosZh: '动物学、植物学、教学实验。',
+    image: 'https://picsum.photos/seed/dissecting-microscope/800/600'
+  },
+  {
+    id: 'electronic-balance',
+    name: 'Electronic Balance',
+    nameZh: '电子天平',
+    category: 'General',
+    description: 'Precision balance for measuring sample mass.',
+    descriptionZh: '用于样品质量测定的精密称量设备。',
+    usage: 'Weigh reagents accurately for solution preparation and quantitative experiments.',
+    usageZh: '用于溶液配制及定量实验中的精确称量。',
+    scenarios: 'General lab work, analytical chemistry.',
+    scenariosZh: '常规实验、分析化学。',
+    image: 'https://picsum.photos/seed/electronic-balance/800/600'
+  },
+  {
+    id: 'pipette-gun',
+    name: 'Pipette',
+    nameZh: '移液器',
+    category: 'General',
+    description: 'Adjustable handheld instrument for transferring small liquid volumes.',
+    descriptionZh: '用于小体积液体转移的可调式手持器具。',
+    usage: 'Deliver precise volumes for sample preparation, dilution, and reagent addition.',
+    usageZh: '用于样品制备、稀释和试剂添加中的精确定量移液。',
+    scenarios: 'Molecular biology, cell culture.',
+    scenariosZh: '分子生物学、细胞培养。',
+    image: 'https://www.thermofisher.cn/TFS-Assets/LPD/product-images/4641080N-650x600.jpg'
+  },
+  {
+    id: 'water-bath',
+    name: 'Constant-temperature Water Bath',
+    nameZh: '恒温水浴锅',
+    category: 'General',
+    description: 'Water-heating device for maintaining samples at stable temperatures.',
+    descriptionZh: '用于在稳定温度下加热和保温样品的水浴设备。',
+    usage: 'Incubate reagents, warm media, and support temperature-sensitive protocols.',
+    usageZh: '用于试剂孵育、培养基预热及温敏实验流程。',
+    scenarios: 'Biochemistry, microbiology, teaching labs.',
+    scenariosZh: '生物化学、微生物学、教学实验。',
+    image: 'https://img.nbchao.com/imgs/200/2019/09/04/1124530145582288.jpg'
+  },
+  {
+    id: 'spectrophotometer',
+    name: 'Spectrophotometer',
+    nameZh: '分光光度计',
+    category: 'General',
+    description: 'Optical instrument for measuring sample absorbance or transmittance.',
+    descriptionZh: '用于测定样品吸光度或透过率的光学仪器。',
+    usage: 'Quantify nucleic acids, proteins, and colored compounds using wavelength-specific measurements.',
+    usageZh: '用于核酸、蛋白和有色化合物的定量测定。',
+    scenarios: 'Biochemistry, analytical chemistry.',
+    scenariosZh: '生物化学、分析化学。',
+    image: 'https://www.shimadzu.com.cn/an/sites/shimadzu.com.cn.an/files/upload/2018/7/20180726_fx_01.jpg'
+  },
+  {
+    id: 'general-centrifuge',
+    name: 'Centrifuge',
+    nameZh: '离心机',
+    category: 'Centrifugation',
+    description: 'Routine centrifuge for density-based separation of biological samples.',
+    descriptionZh: '用于按密度差分离生物样品的常规离心设备。',
+    usage: 'Separate cells, precipitates, and supernatants during routine sample preparation.',
+    usageZh: '用于常规样品处理中分离细胞、沉淀和上清。',
+    scenarios: 'Cell biology, microbiology.',
+    scenariosZh: '细胞生物学、微生物学。',
+    image: 'https://picsum.photos/seed/general-centrifuge/800/600'
+  },
+  {
+    id: 'electrophoresis-apparatus',
+    name: 'Electrophoresis Apparatus',
+    nameZh: '电泳仪',
+    category: 'Molecular',
+    description: 'Instrument for separating charged biomolecules under an electric field.',
+    descriptionZh: '利用电场分离带电生物分子的设备。',
+    usage: 'Separate DNA, RNA, or proteins by size and charge for downstream analysis.',
+    usageZh: '用于按大小和电荷分离 DNA、RNA 或蛋白。',
+    scenarios: 'Molecular biology, protein analysis.',
+    scenariosZh: '分子生物学、蛋白分析。',
+    image: 'http://www.liuyi17.com/uploadfile/202112/14e89d1cd38b6bc.jpg'
+  },
+  {
+    id: 'incubator',
+    name: 'Constant-temperature Incubator',
+    nameZh: '恒温培养箱',
+    category: 'General',
+    description: 'Temperature-controlled chamber for maintaining stable culture conditions.',
+    descriptionZh: '用于维持稳定培养条件的恒温设备。',
+    usage: 'Incubate microorganisms, samples, or reactions under controlled temperature.',
+    usageZh: '用于微生物、样品或反应体系的恒温孵育。',
+    scenarios: 'Microbiology, cell culture support.',
+    scenariosZh: '微生物学、细胞培养辅助。',
+    image: 'https://picsum.photos/seed/incubator/800/600'
+  },
+  {
+    id: 'laboratory-refrigerator',
+    name: 'Laboratory Refrigerator',
+    nameZh: '冰箱',
+    category: 'General',
+    description: 'Cold-storage equipment for temperature-sensitive reagents and samples.',
+    descriptionZh: '用于温敏试剂和样品低温保存的设备。',
+    usage: 'Store reagents, media, and samples at controlled refrigeration temperatures.',
+    usageZh: '用于试剂、培养基和样品的控温冷藏保存。',
+    scenarios: 'General laboratory storage.',
+    scenariosZh: '实验室常规储存。',
+    image: 'https://picsum.photos/seed/laboratory-refrigerator/800/600'
+  },
+  {
+    id: 'microwave-oven',
+    name: 'Microwave Oven',
+    nameZh: '微波炉',
+    category: 'General',
+    description: 'Heating device for selected laboratory preparation tasks.',
+    descriptionZh: '用于部分实验前处理工作的加热设备。',
+    usage: 'Heat compatible solutions or agar media rapidly when approved by protocol.',
+    usageZh: '在符合实验规范时快速加热适配溶液或琼脂培养基。',
+    scenarios: 'Media preparation, teaching labs.',
+    scenariosZh: '培养基制备、教学实验。',
+    image: 'https://picsum.photos/seed/laboratory-microwave/800/600'
+  },
+  {
+    id: 'alcohol-burner',
+    name: 'Alcohol Burner',
+    nameZh: '酒精灯',
+    category: 'General',
+    description: 'Small flame source for basic heating and aseptic operations.',
+    descriptionZh: '用于基础加热和无菌操作的小型火焰装置。',
+    usage: 'Provide localized heating and support simple aseptic handling.',
+    usageZh: '用于局部加热，并辅助简单无菌操作。',
+    scenarios: 'Teaching labs, microbiology.',
+    scenariosZh: '教学实验、微生物学。',
+    image: 'https://picsum.photos/seed/alcohol-burner/800/600'
+  },
+  {
+    id: 'oil-immersion-objective',
+    name: 'Oil-immersion Objective',
+    nameZh: '油镜',
+    category: 'Microscopy',
+    description: 'High-magnification objective lens designed for use with immersion oil.',
+    descriptionZh: '需配合香柏油使用的高倍率物镜。',
+    usage: 'Improve resolution for fine cellular or microbial structures at high magnification.',
+    usageZh: '用于高倍率下提升细胞或微生物精细结构的分辨率。',
+    scenarios: 'Microbiology, microscopy teaching.',
+    scenariosZh: '微生物学、显微教学。',
+    image: 'https://picsum.photos/seed/oil-immersion-objective/800/600'
+  },
+  {
+    id: 'co2-anesthesia-chamber',
+    name: 'CO₂ Anesthesia Chamber',
+    nameZh: 'CO₂ 麻醉箱',
+    category: 'Safety',
+    description: 'Animal-handling chamber used for controlled carbon-dioxide anesthesia procedures.',
+    descriptionZh: '用于受控二氧化碳麻醉流程的动物处理箱。',
+    usage: 'Support standardized induction procedures before approved animal experiments.',
+    usageZh: '用于经批准动物实验前的标准化诱导处理。',
+    scenarios: 'Animal research facilities.',
+    scenariosZh: '动物实验平台。',
+    image: 'https://picsum.photos/seed/co2-anesthesia-chamber/800/600'
+  },
+  {
+    id: 'warming-plate',
+    name: 'Warming Plate',
+    nameZh: '恒温加热板',
+    category: 'General',
+    description: 'Flat heating platform for stable sample warming.',
+    descriptionZh: '用于样品稳定加热的平面加热设备。',
+    usage: 'Maintain controlled surface temperature for sample preparation or short incubations.',
+    usageZh: '用于样品制备或短时孵育中的表面恒温。',
+    scenarios: 'Sample preparation, teaching labs.',
+    scenariosZh: '样品制备、教学实验。',
+    image: 'https://picsum.photos/seed/warming-plate/800/600'
+  },
+  {
+    id: 'co2-asphyxiation-equipment',
+    name: 'CO₂ Asphyxiation Equipment',
+    nameZh: '二氧化碳窒息装置',
+    category: 'Safety',
+    description: 'Controlled CO₂ system for approved laboratory animal euthanasia procedures.',
+    descriptionZh: '用于经批准实验动物安乐死流程的受控 CO₂ 系统。',
+    usage: 'Provide standardized gas delivery and chamber control during approved euthanasia workflows.',
+    usageZh: '用于经批准安乐死流程中的标准化供气与箱体控制。',
+    scenarios: 'Animal research facilities.',
+    scenariosZh: '动物实验平台。',
+    image: 'http://www.yskdbt.com/upfile/img/250320/product_bigimg_67db967976d9c.png'
+  }
+];
+
+const createCatalogEquipment = (item: CatalogEquipment, index: number): Equipment => {
+  const steps = defaultStepsByCategory[item.category];
+  const safety = defaultSafetyByCategory[item.category];
+
+  return {
+    ...item,
+    steps: steps.en,
+    stepsZh: steps.zh,
+    safetyTips: safety.en,
+    safetyTipsZh: safety.zh,
+    location: 'Biology Laboratory',
+    locationZh: '生物实验室',
+    status: 'Available',
+    assetId: `WKU-BIO-${String(baseEquipmentData.length + index + 1).padStart(3, '0')}`
+  };
+};
+
+export const equipmentData: Equipment[] = [
+  ...baseEquipmentData,
+  ...catalogEquipmentData.map(createCatalogEquipment)
 ];

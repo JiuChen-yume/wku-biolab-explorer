@@ -40,6 +40,49 @@ CREATE TABLE IF NOT EXISTS operation_steps (
 );
 
 -- ============================================
+-- 4. 学生表
+-- ============================================
+CREATE TABLE IF NOT EXISTS students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_number VARCHAR(30) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    password_hash CHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 5. 测试记录表
+-- ============================================
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    score INT NOT NULL,
+    total_questions INT NOT NULL,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- 6. 每题作答记录表
+-- ============================================
+CREATE TABLE IF NOT EXISTS quiz_answers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    attempt_id INT NOT NULL,
+    question_id VARCHAR(50) NOT NULL,
+    selected_answer INT NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- 示例学生账号
+-- 密码分别为：wku123 / biolab123
+-- ============================================
+INSERT IGNORE INTO students (id, student_number, name, password_hash) VALUES
+(1, '20260001', '张同学', SHA2('wku123', 256)),
+(2, '20260002', '李同学', SHA2('biolab123', 256));
+
+-- ============================================
 -- 插入器材基础信息（共40台）
 -- ============================================
 INSERT IGNORE INTO equipment (id, image_url) VALUES

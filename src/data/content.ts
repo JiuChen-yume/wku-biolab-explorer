@@ -102,5 +102,125 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: 0,
     explanation: 'The first stop is for aspiration; the second stop is for dispensing.',
     explanationZh: '第一档用于吸取；第二档用于排出。'
+  },
+  {
+    id: 'q3',
+    question: 'Before increasing microscope magnification, what should you do first?',
+    questionZh: '提高显微镜倍率前，首先应该做什么？',
+    options: [
+      'Center and focus the specimen at low magnification',
+      'Immediately switch to the highest objective',
+      'Turn off the light source',
+      'Remove the slide'
+    ],
+    optionsZh: [
+      '先在低倍率下将样本居中并调焦',
+      '直接切换到最高倍率物镜',
+      '关闭光源',
+      '取下载玻片'
+    ],
+    correctAnswer: 0,
+    explanation: 'Starting low makes it easier to locate the specimen and prevents losing the field of view.',
+    explanationZh: '先用低倍率更容易找到样本，也能避免切换后丢失视野。'
+  },
+  {
+    id: 'q4',
+    question: 'Which instrument is most suitable for quantitative gene-expression analysis?',
+    questionZh: '哪种仪器最适合进行基因表达定量分析？',
+    options: [
+      'Real-time PCR system',
+      'Electronic balance',
+      'Water bath',
+      'Dissecting microscope'
+    ],
+    optionsZh: [
+      '实时荧光定量 PCR 仪',
+      '电子天平',
+      '恒温水浴锅',
+      '解剖显微镜'
+    ],
+    correctAnswer: 0,
+    explanation: 'Real-time PCR systems are designed for fluorescence-based nucleic-acid quantification.',
+    explanationZh: '实时荧光定量 PCR 仪专门用于基于荧光信号的核酸定量。'
+  },
+  {
+    id: 'q5',
+    question: 'What is a key purpose of a gel imaging system?',
+    questionZh: '凝胶成像系统的核心用途是什么？',
+    options: [
+      'Document and analyze nucleic-acid or protein gels',
+      'Sterilize culture media',
+      'Measure animal body weight',
+      'Store frozen reagents'
+    ],
+    optionsZh: [
+      '记录并分析核酸或蛋白凝胶',
+      '灭菌培养基',
+      '测量动物体重',
+      '冷冻保存试剂'
+    ],
+    correctAnswer: 0,
+    explanation: 'Gel imaging systems capture gel or blot signals for documentation and quantitative review.',
+    explanationZh: '凝胶成像系统用于采集凝胶或印迹信号，以便记录和定量分析。'
+  },
+  {
+    id: 'q6',
+    question: 'Why should bubbles be avoided in microplate-reader assays?',
+    questionZh: '使用酶标仪时为什么要避免气泡？',
+    options: [
+      'They can interfere with optical readings',
+      'They increase incubation temperature',
+      'They sterilize the sample',
+      'They improve fluorescence intensity'
+    ],
+    optionsZh: [
+      '会干扰光学读数',
+      '会提高孵育温度',
+      '会给样品灭菌',
+      '会增强荧光强度'
+    ],
+    correctAnswer: 0,
+    explanation: 'Bubbles scatter light and can distort absorbance or fluorescence measurements.',
+    explanationZh: '气泡会散射光线，从而影响吸光度或荧光测定结果。'
+  },
+  {
+    id: 'q7',
+    question: 'Which safety practice is correct for alcohol burners?',
+    questionZh: '关于酒精灯，哪项安全做法是正确的？',
+    options: [
+      'Extinguish with the cap rather than blowing it out',
+      'Refill while the flame is still burning',
+      'Place it beside organic solvents',
+      'Leave it unattended during heating'
+    ],
+    optionsZh: [
+      '用灯帽盖灭，而不是用嘴吹灭',
+      '燃烧时直接补充酒精',
+      '放在有机溶剂旁边',
+      '加热时无人看管'
+    ],
+    correctAnswer: 0,
+    explanation: 'Capping the burner is safer and reduces the risk of spreading flame.',
+    explanationZh: '用灯帽盖灭更安全，可降低火焰蔓延风险。'
+  },
+  {
+    id: 'q8',
+    question: 'What should be done after using an oil-immersion objective?',
+    questionZh: '使用油镜后应该怎么做？',
+    options: [
+      'Clean the lens promptly with lens paper',
+      'Leave the oil to dry naturally',
+      'Rinse the lens with tap water',
+      'Store the microscope with oil still on the lens'
+    ],
+    optionsZh: [
+      '及时用擦镜纸清洁镜头',
+      '让香柏油自然风干',
+      '用自来水冲洗镜头',
+      '镜头带油直接收纳'
+    ],
+    correctAnswer: 0,
+    explanation: 'Residual immersion oil can harden and damage optical performance if not removed promptly.',
+    explanationZh: '残留香柏油若不及时清除，可能硬化并影响成像质量。'
   }
 ];

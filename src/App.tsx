@@ -3,16 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Beaker, 
   Microscope, 
   ShieldCheck, 
-  MessageSquare, 
   Search, 
   ChevronRight, 
   X, 
-  Send, 
   Info,
   AlertTriangle,
   BookOpen,
@@ -23,16 +21,18 @@ import {
   HelpCircle,
   ArrowRight,
   Home as HomeIcon,
-  GraduationCap
+  GraduationCap,
+  LogIn,
+  LogOut,
+  UserRound,
+  Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from "@google/genai";
-import ReactMarkdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { equipmentData } from './data/equipment';
 import { tutorialData, safetyRules, quizQuestions } from './data/content';
-import { Equipment, Message, Tutorial, SafetyRule, QuizQuestion } from './types';
+import { Equipment, Tutorial, SafetyRule, QuizQuestion, QuizAttemptSummary, Student } from './types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,13 +49,6 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', content: 'Hello! I am your WKU BioLab Assistant. How can I help you with the laboratory equipment today?' }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Quiz State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -63,6 +56,17 @@ export default function App() {
   const [showQuizResult, setShowQuizResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [student, setStudent] = useState<Student | null>(() => {
+    const saved = localStorage.getItem('wku-student');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [studentNumber, setStudentNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [attempts, setAttempts] = useState<QuizAttemptSummary[]>([]);
+  const [answers, setAnswers] = useState<{ questionId: string; selectedAnswer: number; isCorrect: boolean }[]>([]);
+  const [isSavingAttempt, setIsSavingAttempt] = useState(false);
 
   const categories = ['All', 'Microscopy', 'Centrifugation', 'Molecular', 'General', 'Glassware', 'Safety'];
 
@@ -79,39 +83,12 @@ export default function App() {
   });
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMsg: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setIsTyping(true);
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [...messages, userMsg].map(m => ({
-          role: m.role,
-          parts: [{ text: m.content }]
-        })),
-        config: {
-          systemInstruction: `You are a helpful and professional Laboratory Management Assistant at Wenzhou-Kean University (WKU). Your goal is to help students and faculty manage and use biology laboratory equipment safely and effectively. You have access to technical specifications (Model, Manufacturer, Asset ID) and status information. Be concise, professional, and prioritize safety. Respond in the language the user is using (English or Chinese). Current interface language: ${language === 'en' ? 'English' : 'Chinese'}.`,
-        }
-      });
-
-      const modelMsg: Message = { role: 'model', content: response.text || "I'm sorry, I couldn't process that. Please try again." };
-      setMessages(prev => [...prev, modelMsg]);
-    } catch (error) {
-      console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', content: "Error connecting to the AI assistant. Please check your connection." }]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
+    if (!student) return;
+    fetch(`/api/students/${student.id}/attempts`)
+      .then(res => res.json())
+      .then(data => setAttempts(data.attempts || []))
+      .catch(() => setAttempts([]));
+  }, [student]);
 
   const handleQuizAnswer = (optionIndex: number) => {
     if (selectedAnswer !== null) return;
@@ -120,15 +97,47 @@ export default function App() {
     const correct = optionIndex === quizQuestions[currentQuestionIndex].correctAnswer;
     setIsAnswerCorrect(correct);
     if (correct) setQuizScore(prev => prev + 1);
+    setAnswers(prev => [
+      ...prev,
+      {
+        questionId: quizQuestions[currentQuestionIndex].id,
+        selectedAnswer: optionIndex,
+        isCorrect: correct
+      }
+    ]);
   };
 
-  const nextQuestion = () => {
+  const saveAttempt = async () => {
+    if (!student) return;
+    setIsSavingAttempt(true);
+
+    try {
+      await fetch('/api/quiz-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: student.id,
+          score: quizScore,
+          totalQuestions: quizQuestions.length,
+          answers
+        })
+      });
+      const res = await fetch(`/api/students/${student.id}/attempts`);
+      const data = await res.json();
+      setAttempts(data.attempts || []);
+    } finally {
+      setIsSavingAttempt(false);
+    }
+  };
+
+  const nextQuestion = async () => {
     if (currentQuestionIndex < quizQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setIsAnswerCorrect(null);
     } else {
       setShowQuizResult(true);
+      await saveAttempt();
     }
   };
 
@@ -138,6 +147,38 @@ export default function App() {
     setShowQuizResult(false);
     setSelectedAnswer(null);
     setIsAnswerCorrect(null);
+    setAnswers([]);
+  };
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentNumber, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+      setStudent(data.student);
+      localStorage.setItem('wku-student', JSON.stringify(data.student));
+      setStudentNumber('');
+      setPassword('');
+    } catch {
+      setLoginError(t('Incorrect student number or password.', '学号或密码错误。'));
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setStudent(null);
+    setAttempts([]);
+    localStorage.removeItem('wku-student');
+    resetQuiz();
   };
 
   const renderHome = () => (
@@ -208,7 +249,7 @@ export default function App() {
         {[
           { icon: <GraduationCap className="text-[#003366]" />, title: t('Technical Specs', '技术规格'), desc: t('Access detailed model information, manufacturer details, and real-time status.', '获取详细的型号信息、制造商详情和实时状态。') },
           { icon: <ShieldCheck className="text-[#003366]" />, title: t('Standardized Safety', '标准化安全'), desc: t('Compliant with WKU and international laboratory safety standards.', '符合温肯及国际实验室安全标准。') },
-          { icon: <MessageSquare className="text-[#003366]" />, title: t('AI Support', 'AI 支持'), desc: t('Intelligent assistance for equipment troubleshooting and protocol guidance.', '针对器材故障排除和实验方案指导的智能辅助。') },
+          { icon: <Trophy className="text-[#003366]" />, title: t('Learning Records', '学习记录'), desc: t('Track quiz performance and reinforce laboratory safety knowledge over time.', '记录测试表现，并持续巩固实验室安全知识。') },
         ].map((feature, i) => (
           <div key={i} className="flex gap-6">
             <div className="bg-blue-50 w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center">
@@ -381,20 +422,85 @@ export default function App() {
   );
 
   const renderQuiz = () => {
+    if (!student) {
+      return (
+        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6 items-stretch">
+          <div className="bg-[#003366] text-white rounded-3xl p-8 md:p-10 shadow-xl overflow-hidden relative">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full" />
+            <div className="absolute -left-8 -bottom-10 w-32 h-32 bg-emerald-400/20 rounded-full" />
+            <div className="relative">
+              <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-200 mb-5">
+                <Trophy size={14} />
+                {t('Student Assessment', '学生答题')}
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {t('Every student keeps their own learning record.', '每位学生都保留自己的学习记录。')}
+              </h2>
+              <p className="text-blue-100 leading-7 max-w-xl">
+                {t(
+                  'Log in to complete quizzes independently, save your score, and review recent attempts over time.',
+                  '登录后即可独立完成测试、保存成绩，并查看自己的近期作答记录。'
+                )}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleLogin} className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+              <LogIn size={24} />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('Student Login', '学生登录')}</h3>
+            <p className="text-slate-500 mb-6">{t('Use your student account to begin.', '使用学生账号开始答题。')}</p>
+            <div className="space-y-4">
+              <input value={studentNumber} onChange={e => setStudentNumber(e.target.value)} placeholder={t('Student number', '学号')} className="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:border-emerald-400" />
+              <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder={t('Password', '密码')} className="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:border-emerald-400" />
+            </div>
+            {loginError && <p className="text-sm text-rose-600 mt-4">{loginError}</p>}
+            <button disabled={isLoggingIn} className="w-full mt-6 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 disabled:opacity-60">
+              {isLoggingIn ? t('Signing in...', '登录中...') : t('Enter Quiz', '进入测试')}
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     if (showQuizResult) {
       return (
-        <div className="max-w-xl mx-auto bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-100">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 size={40} />
+        <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-6">
+          <div className="bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-100">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 size={40} />
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-2">{t('Quiz Completed!', '测试完成！')}</h2>
+            <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${quizQuestions.length}`, `你的得分是 ${quizScore} / ${quizQuestions.length}`)}</p>
+            <button 
+              onClick={resetQuiz}
+              className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all"
+            >
+              {t('Restart Quiz', '重新开始')}
+            </button>
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t('Quiz Completed!', '测试完成！')}</h2>
-          <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${quizQuestions.length}`, `你的得分是 ${quizScore} / ${quizQuestions.length}`)}</p>
-          <button 
-            onClick={resetQuiz}
-            className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all"
-          >
-            {t('Restart Quiz', '重新开始')}
-          </button>
+
+          <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+            <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
+              <UserRound size={18} />
+              {student.name}
+            </h3>
+            <div className="space-y-3">
+              {attempts.length === 0 ? (
+                <p className="text-sm text-slate-500">{t('No saved attempts yet.', '还没有保存的成绩。')}</p>
+              ) : attempts.map(attempt => (
+                <div key={attempt.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                  <div>
+                    <div className="font-bold text-slate-900">{attempt.score} / {attempt.totalQuestions}</div>
+                    <div className="text-xs text-slate-400">{new Date(attempt.submittedAt).toLocaleString()}</div>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600">{t('Saved', '已保存')}</span>
+                </div>
+              ))}
+            </div>
+            {isSavingAttempt && <p className="text-sm text-slate-500 mt-4">{t('Saving result...', '正在保存成绩...')}</p>}
+          </div>
         </div>
       );
     }
@@ -402,7 +508,8 @@ export default function App() {
     const question = quizQuestions[currentQuestionIndex];
 
     return (
-      <div className="max-w-2xl mx-auto bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
+      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6">
+        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
         <div className="flex justify-between items-center mb-8">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
             {t(`Question ${currentQuestionIndex + 1} of ${quizQuestions.length}`, `第 ${currentQuestionIndex + 1} 题，共 ${quizQuestions.length} 题`)}
@@ -455,6 +562,22 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
+        <aside className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 h-fit">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400">{t('Student', '学生')}</p>
+              <h3 className="font-bold text-slate-900">{student.name}</h3>
+            </div>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500">
+              <LogOut size={18} />
+            </button>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-xs text-slate-400 mb-1">{t('Current score', '当前得分')}</p>
+            <p className="text-3xl font-bold text-slate-900">{quizScore}</p>
+          </div>
+        </aside>
       </div>
     );
   };
@@ -503,13 +626,6 @@ export default function App() {
                 >
                   <Waves size={14} className="text-[#C5B358]" />
                   {language === 'en' ? '中文' : 'English'}
-                </button>
-                <button 
-                  onClick={() => setIsChatOpen(true)}
-                  className="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#004d99] transition-all shadow-lg shadow-blue-200"
-                >
-                  <MessageSquare size={16} />
-                  {t('AI Assistant', 'AI 助手')}
                 </button>
               </div>
             </div>
@@ -640,102 +756,6 @@ export default function App() {
                     </ul>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* AI Chat Drawer */}
-      <AnimatePresence>
-        {isChatOpen && (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsChatOpen(false)}
-              className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px]"
-            />
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full"
-            >
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-[#003366] text-white shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <Beaker size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm">{t('WKU Lab Assistant', '温肯实验室助手')}</h3>
-                    <p className="text-[10px] opacity-80">{t('Online | Management Support', '在线 | 管理支持')}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsChatOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                {messages.map((msg, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "flex",
-                      msg.role === 'user' ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    <div className={cn(
-                      "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
-                      msg.role === 'user' 
-                        ? "bg-emerald-600 text-white rounded-tr-none" 
-                        : "bg-slate-100 text-slate-800 rounded-tl-none"
-                    )}>
-                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-p:m-0">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                    </div>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-
-              <div className="p-4 border-t border-slate-100">
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder={t("Ask about equipment or safety...", "询问器材或安全相关问题...")}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={!input.trim() || isTyping}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 transition-all"
-                  >
-                    <Send size={18} />
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2 text-center">
-                  {t('Powered by Gemini AI for WKU Biology Department', '由 Gemini AI 为温肯生物系提供支持')}
-                </p>
               </div>
             </motion.div>
           </div>
