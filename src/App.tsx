@@ -49,6 +49,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [isFunctionOpen, setIsFunctionOpen] = useState(true);   // 默认展开
 
   // Quiz State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -702,7 +703,44 @@ export default function App() {
                     </span>
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">{t(selectedEquipment.name, selectedEquipment.nameZh)}</h2>
-                  <p className="text-slate-600 leading-relaxed">{t(selectedEquipment.description, selectedEquipment.descriptionZh)}</p>
+                  <p className="text-slate-600 leading-relaxed mb-8">{t(selectedEquipment.description, selectedEquipment.descriptionZh)}</p>
+                </div>
+
+                {/* 新增：Function / 功能用途（可折叠） */}
+                <div className="mb-8">
+                  <button
+                    onClick={() => setIsFunctionOpen(!isFunctionOpen)}
+                    className="w-full flex items-center justify-between text-left text-xl font-semibold py-4 border-b border-slate-100 hover:bg-slate-50 rounded-xl px-2 transition-all"
+                  >
+                    <span className="flex items-center gap-2">
+                       <GraduationCap size={22} className="text-[#003366]" />
+                       {t('Function', '功能用途')}
+                    </span>
+                    <span className={`transition-transform duration-300 ${isFunctionOpen ? 'rotate-180' : ''}`}>
+      ▼
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                     {isFunctionOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-5 pb-2 text-slate-600 leading-relaxed space-y-4">
+                            <p>{t(selectedEquipment.usage, selectedEquipment.usageZh)}</p>
+                            {selectedEquipment.scenarios && (
+                              <p>
+                                <strong>{t('Typical Scenarios:', '典型应用场景：')}</strong><br/>
+                                {t(selectedEquipment.scenarios, selectedEquipment.scenariosZh)}
+                              </p>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="space-y-8">
