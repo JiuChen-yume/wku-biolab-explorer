@@ -67,6 +67,9 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [registerName, setRegisterName] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
   const [attempts, setAttempts] = useState<QuizAttemptSummary[]>([]);
   const [answers, setAnswers] = useState<{ questionId: string; selectedAnswer: number; isCorrect: boolean }[]>([]);
   const [isSavingAttempt, setIsSavingAttempt] = useState(false);
@@ -154,28 +157,87 @@ export default function App() {
   };
 
   const handleLogin = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setIsLoggingIn(true);
-    setLoginError('');
+  event.preventDefault();
 
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentNumber, password })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login failed');
-      setStudent(data.student);
-      localStorage.setItem('wku-student', JSON.stringify(data.student));
-      setStudentNumber('');
-      setPassword('');
-    } catch {
-      setLoginError(t('Incorrect student number or password.', '学号或密码错误。'));
-    } finally {
-      setIsLoggingIn(false);
+  setIsLoggingIn(true);
+  setLoginError('');
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        studentNumber,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Login failed');
     }
-  };
+
+    setStudent(data.student);
+
+    localStorage.setItem(
+      'wku-student',
+      JSON.stringify(data.student)
+    );
+
+    setStudentNumber('');
+    setPassword('');
+  } catch (error) {
+    setLoginError(
+      t(
+        'Incorrect student number or password.',
+        '学号或密码错误。'
+      )
+    );
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
+
+  const handleRegister = async (event: React.FormEvent) => {
+  event.preventDefault();
+  setIsLoggingIn(true);
+  setLoginError('');
+  setAuthMessage('');
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentNumber,
+        name: registerName,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
+
+    setStudent(data.student);
+    localStorage.setItem('wku-student', JSON.stringify(data.student));
+    setStudentNumber('');
+    setPassword('');
+    setRegisterName('');
+  } catch (error) {
+    setLoginError(t(
+      'Registration failed. The student number may already exist.',
+      '注册失败。该学号可能已经被注册。'
+    ));
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
 
   const handleLogout = () => {
     setStudent(null);
@@ -183,6 +245,83 @@ export default function App() {
     localStorage.removeItem('wku-student');
     resetQuiz();
   };
+
+  const renderAuthPage = () => (
+  <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4">
+    <form
+      onSubmit={authMode === 'login' ? handleLogin : handleRegister}
+      className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100 w-full max-w-md"
+    >
+      <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+        <LogIn size={24} />
+      </div>
+
+      <h1 className="text-2xl font-bold text-slate-900 mb-2">
+        {authMode === 'login'
+          ? t('Student Login', '学生登录')
+          : t('Create Student Account', '创建学生账号')}
+      </h1>
+
+      <p className="text-slate-500 mb-6">
+        {t('Please log in or register before using the BioLab system.', '请先登录或注册后再使用生物实验室系统。')}
+      </p>
+
+      <div className="space-y-4">
+        {authMode === 'register' && (
+          <input
+            value={registerName}
+            onChange={e => setRegisterName(e.target.value)}
+            placeholder={t('Full name', '姓名')}
+            className="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:border-emerald-400"
+          />
+        )}
+
+        <input
+          value={studentNumber}
+          onChange={e => setStudentNumber(e.target.value)}
+          placeholder={t('Student number', '学号')}
+          className="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:border-emerald-400"
+        />
+
+        <input
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          type="password"
+          placeholder={t('Password', '密码')}
+          className="w-full px-4 py-4 rounded-2xl border border-slate-200 outline-none focus:border-emerald-400"
+        />
+      </div>
+
+      {loginError && <p className="text-sm text-rose-600 mt-4">{loginError}</p>}
+      {authMessage && <p className="text-sm text-emerald-600 mt-4">{authMessage}</p>}
+
+      <button
+        disabled={isLoggingIn}
+        className="w-full mt-6 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 disabled:opacity-60"
+      >
+        {isLoggingIn
+          ? t('Please wait...', '请稍候...')
+          : authMode === 'login'
+            ? t('Login', '登录')
+            : t('Register and Enter', '注册并进入')}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setAuthMode(authMode === 'login' ? 'register' : 'login');
+          setLoginError('');
+          setAuthMessage('');
+        }}
+        className="w-full mt-4 text-sm font-bold text-[#003366] hover:underline"
+      >
+        {authMode === 'login'
+          ? t('No account? Register here', '没有账号？点击注册')
+          : t('Already have an account? Login here', '已有账号？点击登录')}
+      </button>
+    </form>
+  </div>
+);
 
   const renderHome = () => (
     <div className="space-y-12">
@@ -585,6 +724,10 @@ export default function App() {
     );
   };
 
+  if (!student) {
+  return renderAuthPage();
+}
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
       {/* Navigation */}
@@ -629,6 +772,13 @@ export default function App() {
                 >
                   <Waves size={14} className="text-[#C5B358]" />
                   {language === 'en' ? '中文' : 'English'}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 transition-all text-slate-600 flex items-center gap-2"
+                >
+                  <LogOut size={14} />
+                  {t('Logout', '退出登录')}
                 </button>
               </div>
             </div>

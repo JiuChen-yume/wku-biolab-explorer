@@ -31,6 +31,52 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
+app.post('/api/register', async (req, res) => {
+  const { studentNumber, name, password } = req.body ?? {};
+
+  if (!studentNumber || !name || !password) {
+    return res.status(400).json({ message: 'Student number, name, and password are required.' });
+  }
+
+  if (String(password).length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+  }
+
+  try {
+    const [existingRows] = await pool.query(
+      'SELECT id FROM students WHERE student_number = ? LIMIT 1',
+      [studentNumber]
+    );
+
+    const existingStudent = Array.isArray(existingRows) ? existingRows[0] : undefined;
+
+    if (existingStudent) {
+      return res.status(409).json({ message: 'This student number is already registered.' });
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO students (student_number, name, password_hash) VALUES (?, ?, ?)',
+      [studentNumber, name, sha256(password)]
+    );
+
+    const studentId = (result as mysql.ResultSetHeader).insertId;
+
+    res.status(201).json({
+      student: {
+        id: studentId,
+        studentNumber,
+        name
+      }
+    });
+  } catch (error) {
+  console.error('Register error:', error);
+  res.status(500).json({
+    message: 'Unable to register student.',
+    error: error instanceof Error ? error.message : String(error)
+  });
+}
+});
+
 app.post('/api/login', async (req, res) => {
   const { studentNumber, password } = req.body ?? {};
 
