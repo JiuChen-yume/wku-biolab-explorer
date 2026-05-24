@@ -25,7 +25,8 @@ import {
   LogIn,
   LogOut,
   UserRound,
-  Trophy
+  Trophy,
+  Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -50,6 +51,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [isFunctionOpen, setIsFunctionOpen] = useState(true);   // 默认展开
+  const [isVideoOpen, setIsVideoOpen] = useState(false);//新增
 
   // Quiz State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -705,43 +707,88 @@ export default function App() {
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">{t(selectedEquipment.name, selectedEquipment.nameZh)}</h2>
                   <p className="text-slate-600 leading-relaxed mb-8">{t(selectedEquipment.description, selectedEquipment.descriptionZh)}</p>
                 </div>
+                {selectedEquipment.videoUrl && (
+  <div className="mb-8">
+    <button
+      onClick={() => setIsVideoOpen(!isVideoOpen)}
+      className="w-full flex items-center justify-between text-left py-3 px-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all"
+    >
+      <span className="flex items-center gap-2 font-semibold text-slate-800">
+        <Play size={18} className="text-[#003366]" />
+        {t('📺 Operation Video', '📺 操作视频')}
+      </span>
+      <span className={`transform transition-transform duration-300 text-slate-500 ${isVideoOpen ? 'rotate-180' : ''}`}>
+        ▼
+      </span>
+    </button>
 
-                {/* 新增：Function / 功能用途（可折叠） */}
-                <div className="mb-8">
-                  <button
-                    onClick={() => setIsFunctionOpen(!isFunctionOpen)}
-                    className="w-full flex items-center justify-between text-left text-xl font-semibold py-4 border-b border-slate-100 hover:bg-slate-50 rounded-xl px-2 transition-all"
-                  >
-                    <span className="flex items-center gap-2">
-                       <GraduationCap size={22} className="text-[#003366]" />
-                       {t('Function', '功能用途')}
-                    </span>
-                    <span className={`transition-transform duration-300 ${isFunctionOpen ? 'rotate-180' : ''}`}>
+    <AnimatePresence>
+      {isVideoOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="overflow-hidden"
+        >
+          <div className="pt-4 pb-2">
+            <div className="aspect-video rounded-xl overflow-hidden shadow-md bg-slate-900">
+              <iframe
+                src={selectedEquipment.videoUrl}  // ← 直接使用，不需要判断语言
+                className="w-full h-full"
+                title={`${t(selectedEquipment.name, selectedEquipment.nameZh)} - Operation Tutorial`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+            <p className="text-xs text-slate-400 mt-2 text-center">
+              {t('Video tutorial from YouTube', '视频教程来自 YouTube')}
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+)}
+
+               {/* Function / 功能用途（Bullet Points） */}
+<div className="mb-8">
+  <button
+    onClick={() => setIsFunctionOpen(!isFunctionOpen)}
+    className="w-full flex items-center justify-between text-left text-xl font-semibold py-4 border-b border-slate-100 hover:bg-slate-50 rounded-xl px-2 transition-all"
+  >
+    <span className="flex items-center gap-2">
+      <GraduationCap size={22} className="text-[#003366]" />
+      {t('Function', '功能用途')}
+    </span>
+    <span className={`transition-transform duration-300 ${isFunctionOpen ? 'rotate-180' : ''}`}>
       ▼
-                    </span>
-                  </button>
+    </span>
+  </button>
 
-                  <AnimatePresence>
-                     {isFunctionOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="pt-5 pb-2 text-slate-600 leading-relaxed space-y-4">
-                            <p>{t(selectedEquipment.usage, selectedEquipment.usageZh)}</p>
-                            {selectedEquipment.scenarios && (
-                              <p>
-                                <strong>{t('Typical Scenarios:', '典型应用场景：')}</strong><br/>
-                                {t(selectedEquipment.scenarios, selectedEquipment.scenariosZh)}
-                              </p>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                  </AnimatePresence>
-                </div>
+  <AnimatePresence>
+    {isFunctionOpen && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        className="overflow-hidden"
+      >
+        <div className="pt-5 pb-2 text-slate-600 leading-relaxed">
+          <ul className="space-y-3 list-disc list-outside pl-5">
+            {t(selectedEquipment.usage, selectedEquipment.usageZh)
+              ?.split('\n')
+              .filter(item => item.trim() !== '')
+              .map((item: string, index: number) => (
+                <li key={index} className="pl-2">{item}</li>
+              ))}
+          </ul>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
 
                 <div className="space-y-8">
                   {/* Technical Specs Table - ZJU Style */}

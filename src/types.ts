@@ -21,6 +21,8 @@ export interface Equipment {
   locationZh?: string;
   status: 'Available' | 'In Use' | 'Maintenance';
   assetId?: string;
+  videoUrl?: string;      // 英文版视频URL
+
 }
 
 export interface Tutorial {
