@@ -50,7 +50,9 @@ export default function App() {
 
   const t = <T,>(en: T, zh: T): T => language === 'en' ? en : zh;
 
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+  return (localStorage.getItem('wku-active-tab') as Tab) || 'home';
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
@@ -107,6 +109,10 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  useEffect(() => {
+  localStorage.setItem('wku-active-tab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if ((!student || !authToken) && currentPath !== '/login') {
@@ -285,8 +291,13 @@ export default function App() {
     setStudent(null);
     setAuthToken('');
     setAttempts([]);
+    setActiveTab('home');
+    setSelectedQuizSet(null);
+
     localStorage.removeItem(STUDENT_STORAGE_KEY);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem('wku-active-tab');
+
     resetQuiz();
     goTo('/login');
   };
