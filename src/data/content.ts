@@ -1,4 +1,4 @@
-import { Tutorial, SafetyRule, QuizQuestion } from '../types';
+import { Tutorial, SafetyRule, QuizQuestion, QuizSet } from '../types';
 
 export const tutorialData: Tutorial[] = [
   {
@@ -222,5 +222,32 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: 0,
     explanation: 'Residual immersion oil can harden and damage optical performance if not removed promptly.',
     explanationZh: '残留香柏油若不及时清除，可能硬化并影响成像质量。'
+  }
+];
+
+export const quizSets: QuizSet[] = [
+  {
+    id: 'safety',
+    title: 'Laboratory Safety Access Test',
+    titleZh: '实验室安全准入测试',
+    description: 'Test essential laboratory safety rules before entering the lab.',
+    descriptionZh: '测试进入实验室前必须掌握的基础安全规范。',
+    questions: quizQuestions.slice(0, 4)
+  },
+  {
+    id: 'equipment',
+    title: 'Equipment Operation Test',
+    titleZh: '仪器使用测试',
+    description: 'Test standard operation knowledge for common laboratory equipment.',
+    descriptionZh: '测试常见实验仪器的标准操作知识。',
+    questions: quizQuestions.slice(4, 8)
+  },
+  {
+    id: 'comprehensive',
+    title: 'Comprehensive BioLab Test',
+    titleZh: '综合生物实验测试',
+    description: 'A mixed test covering safety, equipment, and experimental procedures.',
+    descriptionZh: '综合测试安全、仪器和实验操作流程。',
+    questions: quizQuestions
   }
 ];

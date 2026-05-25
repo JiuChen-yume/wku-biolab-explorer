@@ -32,8 +32,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { equipmentData } from './data/equipment';
-import { tutorialData, safetyRules, quizQuestions } from './data/content';
-import { Equipment, Tutorial, SafetyRule, QuizQuestion, QuizAttemptSummary, Student } from './types';
+import { tutorialData, safetyRules, quizSets } from './data/content';
+import { Equipment, QuizAttemptSummary, Student, QuizSet } from './types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -73,7 +73,9 @@ export default function App() {
   const [attempts, setAttempts] = useState<QuizAttemptSummary[]>([]);
   const [answers, setAnswers] = useState<{ questionId: string; selectedAnswer: number; isCorrect: boolean }[]>([]);
   const [isSavingAttempt, setIsSavingAttempt] = useState(false);
+  const [selectedQuizSet, setSelectedQuizSet] = useState<QuizSet | null>(null);
 
+  const currentQuizQuestions = selectedQuizSet?.questions || [];
   const categories = ['All', 'Microscopy', 'Centrifugation', 'Molecular', 'General', 'Glassware', 'Safety'];
 
   const filteredEquipment = equipmentData.filter(item => {
@@ -100,13 +102,13 @@ export default function App() {
     if (selectedAnswer !== null) return;
     
     setSelectedAnswer(optionIndex);
-    const correct = optionIndex === quizQuestions[currentQuestionIndex].correctAnswer;
+    const correct = optionIndex === currentQuizQuestions[currentQuestionIndex].correctAnswer;
     setIsAnswerCorrect(correct);
     if (correct) setQuizScore(prev => prev + 1);
     setAnswers(prev => [
       ...prev,
       {
-        questionId: quizQuestions[currentQuestionIndex].id,
+        questionId: currentQuizQuestions[currentQuestionIndex].id,
         selectedAnswer: optionIndex,
         isCorrect: correct
       }
@@ -123,8 +125,9 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           studentId: student.id,
+          quizType: selectedQuizSet?.id,
           score: quizScore,
-          totalQuestions: quizQuestions.length,
+          totalQuestions: currentQuizQuestions.length,
           answers
         })
       });
@@ -137,7 +140,7 @@ export default function App() {
   };
 
   const nextQuestion = async () => {
-    if (currentQuestionIndex < quizQuestions.length - 1) {
+    if (currentQuestionIndex < currentQuizQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setIsAnswerCorrect(null);
@@ -606,6 +609,80 @@ export default function App() {
       );
     }
 
+    if (!selectedQuizSet) {
+  return (
+    <div className="space-y-8">
+      <div className="text-center max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+          {t('Choose a Quiz', '选择考试类型')}
+        </h2>
+        <p className="text-slate-500">
+          {t('Select one test category to start. Your score will be saved after completion.', '选择一个考试类型开始作答。完成后系统会保存你的成绩。')}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {quizSets.map((quizSet) => (
+          <button
+            key={quizSet.id}
+            onClick={() => {
+              setSelectedQuizSet(quizSet);
+              resetQuiz();
+            }}
+            className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#003366]/20 transition-all text-left"
+          >
+            <div className="w-14 h-14 bg-blue-50 text-[#003366] rounded-2xl flex items-center justify-center mb-6">
+              <Trophy size={26} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-3">
+              {t(quizSet.title, quizSet.titleZh)}
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-5">
+              {t(quizSet.description, quizSet.descriptionZh)}
+            </p>
+            <span className="text-xs font-bold text-emerald-600">
+              {t(`${quizSet.questions.length} questions`, `${quizSet.questions.length} 题`)}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
+          <UserRound size={18} />
+          {t('Recent Quiz Records', '近期考试记录')}
+        </h3>
+
+        <div className="space-y-3">
+          {attempts.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {t('No saved attempts yet.', '还没有保存的成绩。')}
+            </p>
+          ) : attempts.map(attempt => {
+            const quizInfo = quizSets.find(q => q.id === attempt.quizType);
+
+            return (
+              <div key={attempt.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div>
+                  <div className="font-bold text-slate-900">
+                    {quizInfo ? t(quizInfo.title, quizInfo.titleZh) : attempt.quizType}
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {new Date(attempt.submittedAt).toLocaleString()}
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-emerald-600">
+                  {attempt.score} / {attempt.totalQuestions}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
     if (showQuizResult) {
       return (
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-6">
@@ -614,13 +691,22 @@ export default function App() {
               <CheckCircle2 size={40} />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 mb-2">{t('Quiz Completed!', '测试完成！')}</h2>
-            <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${quizQuestions.length}`, `你的得分是 ${quizScore} / ${quizQuestions.length}`)}</p>
+            <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${currentQuizQuestions.length}`, `你的得分是 ${quizScore} / ${currentQuizQuestions.length}`)}</p>
             <button 
               onClick={resetQuiz}
               className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all"
             >
               {t('Restart Quiz', '重新开始')}
             </button>
+            <button
+              onClick={() => {
+              setSelectedQuizSet(null);
+              resetQuiz();
+            }}
+            className="ml-3 bg-slate-100 text-slate-700 px-8 py-3 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+            >
+            {t('Back to Quiz List', '返回考试列表')}
+        </button>
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
@@ -647,17 +733,17 @@ export default function App() {
       );
     }
 
-    const question = quizQuestions[currentQuestionIndex];
+    const question = currentQuizQuestions[currentQuestionIndex];
 
     return (
       <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6">
         <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
         <div className="flex justify-between items-center mb-8">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
-            {t(`Question ${currentQuestionIndex + 1} of ${quizQuestions.length}`, `第 ${currentQuestionIndex + 1} 题，共 ${quizQuestions.length} 题`)}
+            {t(`Question ${currentQuestionIndex + 1} of ${currentQuizQuestions.length}`, `第 ${currentQuestionIndex + 1} 题，共 ${currentQuizQuestions.length} 题`)}
           </span>
           <div className="flex gap-1">
-            {quizQuestions.map((_, i) => (
+            {currentQuizQuestions.map((_, i) => (
               <div key={i} className={cn("w-8 h-1 rounded-full", i <= currentQuestionIndex ? "bg-emerald-600" : "bg-slate-100")} />
             ))}
           </div>
@@ -698,7 +784,7 @@ export default function App() {
                 onClick={nextQuestion}
                 className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
               >
-                {currentQuestionIndex === quizQuestions.length - 1 ? t('View Results', '查看结果') : t('Next Question', '下一题')}
+                {currentQuestionIndex === currentQuizQuestions.length - 1 ? t('View Results', '查看结果') : t('Next Question', '下一题')}
                 <ArrowRight size={20} />
               </button>
             </motion.div>

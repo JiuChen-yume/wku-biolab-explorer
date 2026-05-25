@@ -58,6 +58,15 @@ export interface QuizQuestion {
   explanationZh: string;
 }
 
+export interface QuizSet {
+  id: string;
+  title: string;
+  titleZh: string;
+  description: string;
+  descriptionZh: string;
+  questions: QuizQuestion[];
+}
+
 export interface Message {
   role: 'user' | 'model';
   content: string;
@@ -71,6 +80,7 @@ export interface Student {
 
 export interface QuizAttemptSummary {
   id: number;
+  quizType: string;
   score: number;
   totalQuestions: number;
   submittedAt: string;

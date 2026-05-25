@@ -105,12 +105,18 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/students/:studentId/attempts', async (req, res) => {
   const studentId = Number(req.params.studentId);
+
   const [rows] = await pool.query(
-    `SELECT id, score, total_questions AS totalQuestions, submitted_at AS submittedAt
+    `SELECT 
+       id,
+       quiz_type AS quizType,
+       score,
+       total_questions AS totalQuestions,
+       submitted_at AS submittedAt
      FROM quiz_attempts
      WHERE student_id = ?
      ORDER BY submitted_at DESC
-     LIMIT 5`,
+     LIMIT 20`,
     [studentId]
   );
 
@@ -118,9 +124,15 @@ app.get('/api/students/:studentId/attempts', async (req, res) => {
 });
 
 app.post('/api/quiz-attempts', async (req, res) => {
-  const { studentId, score, totalQuestions, answers } = req.body ?? {};
+  const { studentId, quizType, score, totalQuestions, answers } = req.body ?? {};
 
-  if (!studentId || typeof score !== 'number' || typeof totalQuestions !== 'number' || !Array.isArray(answers)) {
+  if (
+    !studentId ||
+    !quizType ||
+    typeof score !== 'number' ||
+    typeof totalQuestions !== 'number' ||
+    !Array.isArray(answers)
+  ) {
     return res.status(400).json({ message: 'Invalid quiz attempt payload.' });
   }
 
@@ -130,9 +142,10 @@ app.post('/api/quiz-attempts', async (req, res) => {
     await connection.beginTransaction();
 
     const [attemptResult] = await connection.query(
-      'INSERT INTO quiz_attempts (student_id, score, total_questions) VALUES (?, ?, ?)',
-      [studentId, score, totalQuestions]
+      'INSERT INTO quiz_attempts (student_id, quiz_type, score, total_questions) VALUES (?, ?, ?, ?)',
+      [studentId, quizType, score, totalQuestions]
     );
+
     const attemptId = (attemptResult as mysql.ResultSetHeader).insertId;
 
     for (const answer of answers) {
@@ -148,6 +161,7 @@ app.post('/api/quiz-attempts', async (req, res) => {
     res.status(201).json({ attemptId });
   } catch (error) {
     await connection.rollback();
+    console.error('Quiz save error:', error);
     res.status(500).json({ message: 'Unable to save quiz attempt.' });
   } finally {
     connection.release();
