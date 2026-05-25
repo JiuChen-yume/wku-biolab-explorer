@@ -34,12 +34,16 @@ import { twMerge } from 'tailwind-merge';
 import { equipmentData } from './data/equipment';
 import { tutorialData, safetyRules, quizSets } from './data/content';
 import { Equipment, QuizAttemptSummary, Student, QuizSet } from './types';
+import LoginPage from './LoginPage';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 type Tab = 'home' | 'equipment' | 'tutorials' | 'safety' | 'quiz';
+
+const STUDENT_STORAGE_KEY = 'wku-student';
+const TOKEN_STORAGE_KEY = 'wku-auth-token';
 
 export default function App() {
   const [language, setLanguage] = useState<'en' | 'zh'>('en');
@@ -59,10 +63,12 @@ export default function App() {
   const [showQuizResult, setShowQuizResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [student, setStudent] = useState<Student | null>(() => {
-    const saved = localStorage.getItem('wku-student');
+    const saved = localStorage.getItem(STUDENT_STORAGE_KEY);
     return saved ? JSON.parse(saved) : null;
   });
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) || '');
   const [studentNumber, setStudentNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -77,6 +83,12 @@ export default function App() {
 
   const currentQuizQuestions = selectedQuizSet?.questions || [];
   const categories = ['All', 'Microscopy', 'Centrifugation', 'Molecular', 'General', 'Glassware', 'Safety'];
+  const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+
+  const goTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
 
   const filteredEquipment = equipmentData.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
@@ -91,12 +103,33 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (!student) return;
-    fetch(`/api/students/${student.id}/attempts`)
-      .then(res => res.json())
+    const handlePopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if ((!student || !authToken) && currentPath !== '/login') {
+      goTo('/login');
+    }
+
+    if (student && authToken && currentPath === '/login') {
+      goTo('/');
+    }
+  }, [student, authToken, currentPath]);
+
+  useEffect(() => {
+    if (!student || !authToken) return;
+    fetch(`/api/students/${student.id}/attempts`, { headers: authHeaders })
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('Unauthorized');
+        }
+        return res.json();
+      })
       .then(data => setAttempts(data.attempts || []))
       .catch(() => setAttempts([]));
-  }, [student]);
+  }, [student, authToken]);
 
   const handleQuizAnswer = (optionIndex: number) => {
     if (selectedAnswer !== null) return;
@@ -122,7 +155,7 @@ export default function App() {
     try {
       await fetch('/api/quiz-attempts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           studentId: student.id,
           quizType: selectedQuizSet?.id,
@@ -131,7 +164,7 @@ export default function App() {
           answers
         })
       });
-      const res = await fetch(`/api/students/${student.id}/attempts`);
+      const res = await fetch(`/api/students/${student.id}/attempts`, { headers: authHeaders });
       const data = await res.json();
       setAttempts(data.attempts || []);
     } finally {
@@ -184,14 +217,17 @@ export default function App() {
     }
 
     setStudent(data.student);
+    setAuthToken(data.token);
 
     localStorage.setItem(
-      'wku-student',
+      STUDENT_STORAGE_KEY,
       JSON.stringify(data.student)
     );
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
 
     setStudentNumber('');
     setPassword('');
+    goTo('/');
   } catch (error) {
     setLoginError(
       t(
@@ -228,10 +264,13 @@ export default function App() {
     }
 
     setStudent(data.student);
-    localStorage.setItem('wku-student', JSON.stringify(data.student));
+    setAuthToken(data.token);
+    localStorage.setItem(STUDENT_STORAGE_KEY, JSON.stringify(data.student));
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
     setStudentNumber('');
     setPassword('');
     setRegisterName('');
+    goTo('/');
   } catch (error) {
     setLoginError(t(
       'Registration failed. The student number may already exist.',
@@ -244,9 +283,12 @@ export default function App() {
 
   const handleLogout = () => {
     setStudent(null);
+    setAuthToken('');
     setAttempts([]);
-    localStorage.removeItem('wku-student');
+    localStorage.removeItem(STUDENT_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     resetQuiz();
+    goTo('/login');
   };
 
   const renderAuthPage = () => (
@@ -810,9 +852,29 @@ export default function App() {
     );
   };
 
-  if (!student) {
-  return renderAuthPage();
-}
+  if (!student || !authToken || currentPath === '/login') {
+    return (
+      <LoginPage
+        authMode={authMode}
+        authMessage={authMessage}
+        isLoggingIn={isLoggingIn}
+        loginError={loginError}
+        password={password}
+        registerName={registerName}
+        studentNumber={studentNumber}
+        onAuthModeChange={(mode) => {
+          setAuthMode(mode);
+          setLoginError('');
+          setAuthMessage('');
+        }}
+        onLogin={handleLogin}
+        onPasswordChange={setPassword}
+        onRegister={handleRegister}
+        onRegisterNameChange={setRegisterName}
+        onStudentNumberChange={setStudentNumber}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS students (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_number VARCHAR(30) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
-    password_hash CHAR(64) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS students (
 CREATE TABLE IF NOT EXISTS quiz_attempts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
+    quiz_type VARCHAR(50) NOT NULL DEFAULT 'general',
     score INT NOT NULL,
     total_questions INT NOT NULL,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
