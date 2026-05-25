@@ -33,7 +33,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { equipmentData } from './data/equipment';
 import { tutorialData, safetyRules, quizSets } from './data/content';
-import { Equipment, QuizAttemptSummary, Student, QuizSet } from './types';
+import { Equipment, QuizAttemptSummary, Student, QuizSet, QuizQuestion } from './types';
 import LoginPage from './LoginPage';
 
 function cn(...inputs: ClassValue[]) {
@@ -82,8 +82,16 @@ export default function App() {
   const [answers, setAnswers] = useState<{ questionId: string; selectedAnswer: number; isCorrect: boolean }[]>([]);
   const [isSavingAttempt, setIsSavingAttempt] = useState(false);
   const [selectedQuizSet, setSelectedQuizSet] = useState<QuizSet | null>(null);
+  const [activeQuizQuestions, setActiveQuizQuestions] = useState<QuizQuestion[]>([]);
 
-  const currentQuizQuestions = selectedQuizSet?.questions || [];
+  const getRandomQuestions = (questions: QuizQuestion[], count = 5) => {
+  return [...questions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(count, questions.length));
+};
+
+const currentQuizQuestions = activeQuizQuestions;
+
   const categories = ['All', 'Microscopy', 'Centrifugation', 'Molecular', 'General', 'Glassware', 'Safety'];
   const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
@@ -680,6 +688,7 @@ export default function App() {
             key={quizSet.id}
             onClick={() => {
               setSelectedQuizSet(quizSet);
+              setActiveQuizQuestions(getRandomQuestions(quizSet.questions, 5));
               resetQuiz();
             }}
             className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#003366]/20 transition-all text-left"
@@ -737,6 +746,9 @@ export default function App() {
 }
 
     if (showQuizResult) {
+      const passed =
+        currentQuizQuestions.length > 0 &&
+        quizScore / currentQuizQuestions.length >= 0.9;
       return (
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-6">
           <div className="bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-100">
@@ -744,18 +756,49 @@ export default function App() {
               <CheckCircle2 size={40} />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 mb-2">{t('Quiz Completed!', '测试完成！')}</h2>
-            <p className="text-slate-500 mb-8">{t(`Your score is ${quizScore} / ${currentQuizQuestions.length}`, `你的得分是 ${quizScore} / ${currentQuizQuestions.length}`)}</p>
+            <p className="text-slate-500 mb-4">
+              {t(
+                `Your score is ${quizScore} / ${currentQuizQuestions.length}`,
+                `你的得分是 ${quizScore} / ${currentQuizQuestions.length}`
+              )}
+            </p>
+
+            <div
+              className={cn(
+                "inline-flex items-center px-6 py-2 rounded-full text-lg font-bold mb-4",
+                passed
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-rose-100 text-rose-700"
+              )}
+            >
+              {passed ? t('PASS', '通过') : t('FAIL', '未通过')}
+            </div>
+
+            <p className="text-sm text-slate-500 mb-8">
+              {t(
+                'A score of 90% or above is required to pass this assessment.',
+                '本测试需要达到 90% 或以上才算通过。'
+              )}
+            </p>
             <button 
-              onClick={resetQuiz}
+              onClick={() => {
+                if (selectedQuizSet) {
+                  setActiveQuizQuestions(
+                    getRandomQuestions(selectedQuizSet.questions, 5)
+                  );
+                }
+                resetQuiz();
+              }}
               className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all"
             >
               {t('Restart Quiz', '重新开始')}
             </button>
             <button
               onClick={() => {
-              setSelectedQuizSet(null);
-              resetQuiz();
-            }}
+                setSelectedQuizSet(null);
+                setActiveQuizQuestions([]);
+                resetQuiz();
+              }}
             className="ml-3 bg-slate-100 text-slate-700 px-8 py-3 rounded-2xl font-bold hover:bg-slate-200 transition-all"
             >
             {t('Back to Quiz List', '返回考试列表')}
