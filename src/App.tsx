@@ -229,6 +229,10 @@ export default function App() {
     setPassword('');
     goTo('/');
   } catch (error) {
+    if (error instanceof Error) {
+      setLoginError(error.message);
+      return;
+    }
     setLoginError(
       t(
         'Incorrect student number or password.',
@@ -272,6 +276,10 @@ export default function App() {
     setRegisterName('');
     goTo('/');
   } catch (error) {
+    if (error instanceof Error) {
+      setLoginError(error.message);
+      return;
+    }
     setLoginError(t(
       'Registration failed. The student number may already exist.',
       '注册失败。该学号可能已经被注册。'
